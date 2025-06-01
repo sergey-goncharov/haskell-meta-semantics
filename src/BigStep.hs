@@ -1,4 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE KindSignatures, PolyKinds, TypeApplications #-}
+
 module BigStep where
 
 import Data.Proxy ( Proxy(Proxy) )
@@ -24,7 +26,7 @@ class (Functor sv, Bifunctor sc) => BSSOS d sv sc where
   zeta = zetahat @d . sigOp . SigC
 
 -- Deriving big-step specification from a separated HoGSOS law.
-instance (SepHOGSOS sv sc d) => BSSOS d sv sc where
+instance (SepHOGSOS sv sc d) => BSSOS (d :: * -> * -> *) sv sc where
   xi :: sc (sv x) x -> Free (SepSig sv sc) x
   xi t =
     rhoCV (bimap ((sigOp . SigV &&& mx_second @d join . rhoV) . fmap return)

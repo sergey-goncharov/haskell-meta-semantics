@@ -1,4 +1,4 @@
-module Benchmark where
+module Benchmarks where
 
 import Data.Proxy ( Proxy(Proxy) )
 import Data.Bifunctor ( Bifunctor(bimap, first, second) )
@@ -152,3 +152,6 @@ testCBV3Zeta = fmap tryEvalZCBV benchmarkCBV3
 
 testCBV3ZetaAgreement :: IO ()
 testCBV3ZetaAgreement = do putStrLn $ "Example terms: " ++ show benchmarkCBV3; compareLists testCBV3Beta testCBV3Zeta
+
+main :: IO ()
+main = putStrLn "Benchmarks running..."
