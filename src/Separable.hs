@@ -25,7 +25,7 @@ type InitialV sv sc = sv (Initial (SepSig sv sc))
 -- muSigma_c in the paper.
 type InitialC sv sc = sc (Initial (SepSig sv sc)) (Initial (SepSig sv sc))
 
-instance (Functor sv, Bifunctor sc) => Functor (SepSig' sv sc b) where
+instance (Functor sv, Bifunctor sc, Functor (sc b)) => Functor (SepSig' sv sc b) where
   fmap :: (a -> c) -> SepSig' sv sc b a -> SepSig' sv sc b c 
   fmap f (SigV t) = SigV $ fmap f t
   fmap f (SigC t) = SigC $ fmap f t
