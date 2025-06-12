@@ -1,3 +1,21 @@
+{-|
+Module      : BigStep
+Description : Big-step operational semantics and its derivation from separated HO-GSOS
+
+This module defines a type class for abstract big-step semantics ``BSSOS``, 
+its monadic variant ``BSSOST`` and a derivations of big-step semantics from a 
+separated higher-order GSOS through instance declaration.
+      
+It includes:
+
+- The `BSSOS` and `BSSOST` type classes for big-step semantics (with and without monads)
+- Derivations of big-step rules from HO-GSOS specifications
+- Test functions for evaluating big-step semantics on example terms
+
+This module provides a definition of big-step semantics as a type class and 
+and a translation from small-step to big-step semantics thorugh an instance declaration.
+-}
+
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE KindSignatures, PolyKinds, TypeApplications #-}
 
@@ -25,7 +43,7 @@ class (Functor sv, Bifunctor sc) => BSSOS d sv sc where
   zeta :: InitialC sv sc -> InitialV sv sc
   zeta = zetahat @d . sigOp . SigC
 
--- Deriving big-step specification from a separated HoGSOS law.
+-- Deriving big-step specification from a separated HO-GSOS law.
 instance (SepHOGSOS sv sc d) => BSSOS (d :: * -> * -> *) sv sc where
   xi :: sc (sv x) x -> Free (SepSig sv sc) x
   xi t =
@@ -46,7 +64,7 @@ class (Functor sv, Bifunctor sc, Monad t) => BSSOST a sv sc t where
   zetaT :: InitialC sv sc -> t (InitialV sv sc)
   zetaT = zetahatT @a . sigOp . SigC
 
--- Deriving big-step specification from a separated HoGSOS law with monad.
+-- Deriving big-step specification from a separated HO-GSOS law with monad.
 instance (SepHOGSOST sv sc d t) => BSSOST d sv sc t where
   xiT :: SepHOGSOST sv sc d t => sc (sv x) x -> t (Free (SepSig sv sc) x)
   xiT = fmap (>>= nabla) . rhoCVT . 

@@ -1,3 +1,21 @@
+{-|
+Module      : Examples
+Description : Instantiations of operational semantics for testing
+
+This module provides concrete instantiations of the abstract syntax and semantics to xCL and 
+its variants, 
+
+It includes:
+
+- Example languages such as ArtV/ArtC, NDxCL, CBVxCL, and parallel variants
+- Instances of `SepHOGSOS` for each language
+- Pretty-printing and equality instances for terms
+- Evaluation functions for testing operational semantics
+
+These examples are used in benchmarks and serve to demonstrate the expressiveness
+and correctness of the specification formats.
+-}
+
 {-# LANGUAGE AllowAmbiguousTypes #-}
 module Examples where
 

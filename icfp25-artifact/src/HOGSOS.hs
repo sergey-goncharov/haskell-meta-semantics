@@ -1,3 +1,20 @@
+{-|
+Module      : HOGSOS
+Description : Higher-order GSOS (HO-GSOS) specification format 
+
+This module defines the HOGSOS type class and a genertic definition of the operational model gamma.
+
+It includes:
+
+- The `HOGSOS` type class for specifying small-step operational semantics
+- The `gamma` function (operational model) for executing the operational semantics
+- An instance for the xCL calculus
+- A test function `tryEval` for evaluating transitions
+
+This module provides the general framework for specifying and interpreting
+higher-order operational semantics, as discussed in the paper.
+-}
+
 module HOGSOS where
 
 import Data.Bifunctor ( Bifunctor(first) )
@@ -5,9 +22,9 @@ import Control.Arrow ((&&&)) -- For arrows to a product object.
 import Syntax ( Initial, Free(..), XCL, Mrg(..), XCL'(..), sigOp )
 import Behaviour ( Beh(..), MixFunctor(mx_second) )
 
--- Definitions related to HoGSOS laws:
+-- Definitions related to HO-GSOS laws:
 
--- HoGSOS law.
+-- HO-GSOS law.
 class (Bifunctor s, MixFunctor b) => HOGSOS s b where
   rho :: s (x, b x y) x -> b x (Free (Mrg s) (Either x y))
 
@@ -16,7 +33,7 @@ class (Bifunctor s, MixFunctor b) => HOGSOS s b where
   gamma (Cont (Mrg t)) = mx_second (>>= nabla) $ rho $ first (id &&& gamma) t
     where nabla = either id id
 
--- Instantiating the operational semantics of xCL as a HoGSOS law.
+-- Instantiating the operational semantics of xCL as a HO-GSOS law.
 instance HOGSOS XCL' Beh where
   rho :: XCL' (x, Beh x y) x -> Beh x (Free XCL (Either x y))
   rho S = Eval $ sigOp . S' . Res . Left

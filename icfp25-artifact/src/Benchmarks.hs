@@ -1,3 +1,25 @@
+{-|
+Module      : Benchmarks
+Description : Benchmark definitions and test runners for testing semantics
+
+This module defines benchmark terms and test functions for evaluating:
+
+- Multi-step semantics (`beta`)
+- Big-step semantics (`zeta`)
+- Agreement between the two semantics
+
+It includes test suites for various languages (e.g., Art, NDxCL, CBVxCL variants),
+and uses `compareLists` from `Utils` to report semantic agreement.
+
+Each language has:
+- A list of sample terms
+- Functions named `test[LanguageName]Beta` and `test[LanguageName]Zeta` to run the respective semantics
+- A function `test[LanguageName]ZetaAgreement` (when applicable) to compare the results of `beta` and `zeta`
+
+To run a test, simply evaluate the corresponding function in GHCi. 
+Ensure the input types match the expected signatures for each test case.
+-}
+
 module Benchmarks where
 
 import Data.Proxy ( Proxy(Proxy) )
@@ -10,13 +32,6 @@ import Separable
 import BigStep ( tryEvalZT )
 import Examples
 import Utils
-
--- Introduction:
--- We have a list of samples for every function that can be tested here, accompanying a function that can run the test on the whole function.
--- To execute the test please just run the defined function(s) in each case.
--- For each case there are functions named "test[LanguageName]Beta" and "test[LanguageName]Zeta" that run the Beta and Zeta function of the language on the list of test cases.
--- Also there is a function in most cases named "test[LanguageName]ZetaAgreement" that shows in which cases of the test list the result of applying Beta and Zeta coincide. 
--- For every case please pay attention to the type of the input arguments, when inputting them.
 
 ------------------------------------------------------------------------------
 -- Testing multistep and big-step reductions for Example 2.1.

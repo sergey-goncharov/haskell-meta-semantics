@@ -22,7 +22,7 @@ To build and run the artifact, you will need:
 - **GHC   ≥ 9.4**
 - **Cabal ≥ 3.0**
 - No external libraries beyond the standard `base` package (version ≥ 4.12 and < 5)
-
+A
 All modules are written in **Haskell2010** and use common language extensions such as `TypeApplications`, `FlexibleInstances`, and `ScopedTypeVariables`.
 
 ## Building the Artifact
@@ -31,5 +31,4 @@ Using **Cabal**:
 ```bash
 cabal update
 cabal build
-
 
