@@ -2,12 +2,7 @@
 
 ## Overview
 
-This artifact accompanies the ICFP 2025 paper "Big Steps in Higher-Order Mathematical Operational Semantics" and provides Haskell source files that implement the type classes for small-step and big-step semantics, construction, examples and benchmarks discussed in the paper. The artifact includes:
-
-- **Syntax definitions** for various calculi
-- **Operational semantics** using HoGSOS and Separated HoGSOS
-- **Big-step semantics**
-- **Examples and benchmarks** to validate the theoretical claims
+This artifact accompanies the ICFP 2025 paper "Big Steps in Higher-Order Mathematical Operational Semantics" and provides Haskell source files that implement the type classes for small-step and big-step semantics, construction, examples and benchmarks discussed in the paper. 
 
 ## File Structure
 

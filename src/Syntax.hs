@@ -1,3 +1,23 @@
+{-|
+Module      : Syntax
+Description : Core syntax definitions
+
+This module defines general syntax-related definitions as well as concrete definition of 
+syntax of xCL and its variants.
+
+It includes:
+
+- Syntax for xCL, NDxCL (nondeterministic xCL)
+- Functor and bifunctor instance declarations for the relevant example syntax functors
+- The free monad construction over syntax functors
+- Initial algebra of terms as a special case of the free monad construction
+- Pretty-printing and equality instances for terms
+
+These definitions serve as the basis for specifying operational semantics (in `HOGSOS`, `Separable`, etc.)
+and for constructing and evaluating example terms and benchmarks.
+
+-}
+
 module Syntax where
 
 import Data.Bifunctor (Bifunctor(bimap))
@@ -5,8 +25,7 @@ import Data.Void (Void)
 import Control.Monad (ap)
 import Control.Arrow ((&&&))
 
--- xCL and some more abstract notions.
-
+-- | Syntax for xCL (extended combinatory logic).
 data XCL' x y 
   = S 
   | K 
@@ -16,6 +35,7 @@ data XCL' x y
   | S'' x x 
   | Comp x y 
 
+-- | Value part of the xCL syntax.
 data XCLV x 
   = Sv 
   | Kv 
@@ -25,6 +45,7 @@ data XCLV x
   | S''v x x 
   deriving (Functor)
 
+-- | Computation part of the xCL syntax.
 data XCLC x y 
   = Compc x y 
 
@@ -49,7 +70,6 @@ instance Functor (XCL' x) where
   fmap f (K' x) = K' x
   fmap f (S'' x y) = S'' x y
   fmap f (Comp x y) = Comp x (f y)
-
 
 instance Bifunctor XCL' where
   bimap :: (a -> b) -> (c -> d) -> XCL' a c -> XCL' b d
@@ -96,7 +116,7 @@ instance Bifunctor s => Functor (Mrg s) where
   fmap :: Bifunctor s => (a -> b) -> Mrg s a -> Mrg s b
   fmap f (Mrg x) = Mrg (bimap f f x)
 
--- Separated non-deterministic xCL syntax:
+-- Non-deterministic xCL
 
 data NDxCLV x 
   = NS 

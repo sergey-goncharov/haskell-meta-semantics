@@ -1,3 +1,19 @@
+{-|
+Module      : Separable
+Description : Separated HO-GSOS and operational semantics for non-deterministic calculi
+
+This module defines the separated syntax and behavior functors, and implements
+the Separated HO-GSOS specification format. It includes:
+
+- Definitions of separated syntax functors (Σ_v and Σ_c)
+- Mixed-variance behavior functors (with and without monads)
+- Operational semantics via `gammaV`, `gammaC`, and multi-step transitions `beta`, `hatbeta`
+- Instances for non-deterministic xCL and its operational rules
+
+This module provides a refinement of HO-GSOS based on separation between computation and values 
+for syntax and behavior.
+-}
+
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use lambda-case" #-}
@@ -12,8 +28,8 @@ import Syntax (NDxCLC(..), NDxCLV(..), XCLC(..), XCLV(..), Initial, Free(..), Mr
 import Behaviour (MixFunctor(..), Beh (Eval, Red))
 import HOGSOS (HOGSOS(..), gamma)
 
--- Definitions related to separated HoGSOS laws:
--- We have also defined the Beta function (the multi-step transition) in the paper as a function of the class of separated HoGSOS laws.
+-- Definitions related to separated HO-GSOS laws:
+-- We have also defined the Beta function (the multi-step transition) in the paper as a function of the class of separated HO-GSOS laws.
 
 -- Separated syntax functor (the bifunctor Sigma').
 data SepSig' sv sc x y = SigV (sv y) | SigC (sc x y)
@@ -87,13 +103,13 @@ class (MixFunctor d, Functor sv, Bifunctor sc) => SepHOGSOS sv sc d where
   hatbeta (p :: Proxy d) (Cont (Mrg (SigC c))) = hatbeta p (gammaC p c)
 
 
--- Instantiating separated laws as HoGSOS laws.
+-- Instantiating separated laws as HO-GSOS laws.
 instance (SepHOGSOS sv sc d) => HOGSOS (SepSig' sv sc) (SepBeh d) where
   rho :: SepSig' sv sc (x, SepBeh d x y) x -> SepBeh d x (Free (SepSig sv sc) (Either x y))
   rho (SigV v) = BehV $ mvmap id (fmap Left) (rhoV v)
   rho (SigC c) = BehC $ rhoC c
 
--- Instantiating the operational semantics of non-deterministic xCL as a separated HoGSOS law with monad.
+-- Instantiating the operational semantics of non-deterministic xCL as a separated HO-GSOS law with monad.
 instance SepHOGSOS XCLV XCLC (->) where
   rhoV :: XCLV x -> x -> Free (SepSig XCLV XCLC) x
   rhoV Sv = sigOp . SigV . S'v . Res
@@ -135,7 +151,7 @@ class (Functor sv, Bifunctor sc, MixFunctor d, Monad t) => SepHOGSOST sv sc d t 
   betahatT (p :: Proxy d) (Cont (Mrg (SigV v))) = return v
   betahatT (p :: Proxy d) (Cont (Mrg (SigC c))) = betaT p c
 
--- Instantiating separated laws with a monad as HoGSOS laws.
+-- Instantiating separated laws with a monad as HO-GSOS laws.
 instance (SepHOGSOST sv sc d t) => HOGSOS (SepSig' sv sc) (SepBehT t d) where
   rho :: SepSig' sv sc (x, SepBehT t d x y) x -> SepBehT t d x (Free (SepSig sv sc) (Either x y))
   rho (SigV v) = BehVT $ return $ mx_second (fmap Left) (rhoVT @_ @_ @d @t v)
@@ -143,7 +159,7 @@ instance (SepHOGSOST sv sc d t) => HOGSOS (SepSig' sv sc) (SepBehT t d) where
 
 -- Non-deterministic xCL as an example:
 
--- Instantiating the operational semantics of non-deterministic xCL as a separated HoGSOS law with monad.
+-- Instantiating the operational semantics of non-deterministic xCL as a separated HO-GSOS law with monad.
 instance SepHOGSOST NDxCLV NDxCLC (->) [] where
   rhoVT :: NDxCLV x -> x -> Free (SepSig NDxCLV NDxCLC) x
   rhoVT NS = sigOp . SigV . NS' . Res
