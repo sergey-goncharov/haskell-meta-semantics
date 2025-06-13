@@ -6,6 +6,15 @@ The files inside the folder have the following chain of dependencies:
 Syntax.hs <- Behaviour.hs <- HOGSOS.hs <- Separable.hs <- BigStep.hs <- Examples.hs <- Benchmark.hs
 ```
 
+```                                             
+┌───────────┐    ┌──────────────┐    ┌───────────┐    ┌──────────────┐    ┌────────────┐    ┌─────────────┐    ┌───────────────┐
+│ Syntax.hs │───►│ Behaviour.hs │───►│ HOGSOS.hs │───►│ Separable.hs │───►│ BigStep.hs │───►│ Examples.hs │───►│ Benchmarks.hs │
+└───────────┘    └──────────────┘    └───────────┘    └──────────────┘    └────────────┘    └─────────────┘    └───────────────┘
+                                                                                             ┌──────────┐              ▲       
+                                                                                             │ Utils.hs │──────────────┘       
+                                                                                             └──────────┘                      
+```
+
 There is also a file named `Utils.hs` that does not depend on any other file, and only `Benchmark.hs` depends on it.
 
 ### File Descriptions

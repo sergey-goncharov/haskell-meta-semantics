@@ -2,9 +2,23 @@
 
 ## Overview
 
-This artifact accompanies the ICFP 2025 paper "Big Steps in Higher-Order Mathematical Operational Semantics" and provides Haskell source files that implement the type classes for small-step and big-step semantics, construction, examples and benchmarks discussed in the paper. 
+This artifact accompanies the ICFP 2025 paper "Big Steps in Higher-Order Mathematical Operational Semantics" and provides Haskell source files that implement the type classes for small-step and big-step semantics, construction, examples and benchmarks supporting the paper. 
 
-## File Structure
+## Artifact Structure
+
+The files inside the ``src`` folder are subject to the following dependencies:
+
+```                                             
+┌───────────┐    ┌──────────────┐    ┌───────────┐    ┌──────────────┐    ┌────────────┐    ┌─────────────┐    ┌───────────────┐
+│ Syntax.hs │───►│ Behaviour.hs │───►│ HOGSOS.hs │───►│ Separable.hs │───►│ BigStep.hs │───►│ Examples.hs │───►│ Benchmarks.hs │
+└───────────┘    └──────────────┘    └───────────┘    └──────────────┘    └────────────┘    └─────────────┘    └───────────────┘
+                                                                                             ┌──────────┐              ▲       
+                                                                                             │ Utils.hs │──────────────┘       
+                                                                                             └──────────┘                      
+```
+
+## Source File Contents
+
 
 - ``Syntax.hs``: Contains the abstract notions needed about the syntax of a language (standard and separated), along with the syntax of xCL and non-deterministic xCL.
 - ``Behaviour.hs``: Implements the behaviour functor in general (standard and separated), and for the cases of deterministic and non-deterministic behaviour.
@@ -31,4 +45,4 @@ Using **Cabal**:
 ```bash
 cabal update
 cabal build
-
+```
