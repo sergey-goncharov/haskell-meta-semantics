@@ -1,19 +1,19 @@
 {-|
+
 Module      : Examples
-Description : Instantiations of operational semantics for testing
+Description : Examples of languages and operational semantics in separated HO-GSOS format
 
 This module provides concrete instantiations of the abstract syntax and semantics to xCL and 
-its variants, 
+its variants. It includes:
 
-It includes:
-
-- Example languages such as ArtV/ArtC, NDxCL, CBVxCL, and parallel variants
+- Example languages such as ArtV/ArtC, NDxCL, CBVxCL, and variants wil parallel composition
 - Instances of `SepHOGSOS` for each language
 - Pretty-printing and equality instances for terms
 - Evaluation functions for testing operational semantics
 
-These examples are used in benchmarks and serve to demonstrate the expressiveness
-and correctness of the specification formats.
+These examples are used in benchmarks (``Benchmarks.hs``) and serve to demonstrate the expressiveness
+of the separated HO-GSOS framework and tests the translation from small-step to big-step semantics.
+
 -}
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
@@ -33,7 +33,7 @@ import BigStep ( BSSOS(zeta) , zetahatT)
 -- SECTION 1: xCL (Extended Combinatory Logic)
 -------------------------------------------------------------------------------
 
--- | Syntax for xCL (extended combinatory logic).
+-- | Syntax for xCL 
 data XCL' x y 
   = S 
   | K 
@@ -54,8 +54,7 @@ data XCLV x
   deriving (Functor)
 
 -- | Computation part of the xCL syntax.
-data XCLC x y 
-  = Compc x y 
+data XCLC x y = Compc x y 
 
 instance Functor (XCLC x) where
   fmap :: (a -> b) -> XCLC x a -> XCLC x b
@@ -95,7 +94,8 @@ instance HOGSOS XCL' Beh where
   rho I = Eval $ Res . Left
   rho (S' (s, _)) = Eval $ \t -> sigOp $ S'' (Res $ Left s) (Res $ Left t)
   rho (K' (s, _)) = Eval $ const $ Res $ Left s
-  rho (S'' (s, _) (u, _)) = Eval $ \t -> sigOp $ Comp (sigOp $ Comp (Res $ Left s) (Res $ Left t)) (sigOp $ Comp (Res $ Left u) (Res $ Left t))
+  rho (S'' (s, _) (u, _)) = Eval $ \t -> sigOp $ Comp (sigOp $ Comp (Res $ Left s) (Res $ Left t)) 
+                                                      (sigOp $ Comp (Res $ Left u) (Res $ Left t))
   rho (Comp (_, Red s) u) = Red $ sigOp $ Comp (Res $ Right s) (Res $ Left u)
   rho (Comp (_, Eval f) u) = Red $ Res (Right $ f u)
 
@@ -107,7 +107,8 @@ instance SepHOGSOS XCLV XCLC (->) where
   rhoV Iv = Res
   rhoV (S'v t) = sigOp . SigV . S''v (Res t) . Res
   rhoV (K'v t) = const (Res t)
-  rhoV (S''v t s) = \u -> sigOp $ SigC $ Compc (sigOp $ SigC $ Compc (Res t) (Res u)) (sigOp $ SigC $ Compc (Res s) (Res u))
+  rhoV (S''v t s) = \u -> sigOp $ SigC $ Compc (sigOp $ SigC $ Compc (Res t) (Res u)) 
+                                               (sigOp $ SigC $ Compc (Res s) (Res u))
  
   rhoC :: XCLC (x, SepBeh (->) x y) x -> Free (SepSig XCLV XCLC) (Either x y)
   rhoC (Compc (_, BehC s) u) = sigOp (SigC $ Compc (Res $ Right s) (Res $ Left u))
@@ -236,7 +237,8 @@ instance SepHOGSOST NDxCLV NDxCLC (->) [] where
   rhoVT NI = Res
   rhoVT (NS' t) = sigOp . SigV . NS'' (Res t) . Res
   rhoVT (NK' t) = const (Res t)
-  rhoVT (NS'' t s) = \u -> sigOp $ SigC $ NComp (sigOp $ SigC $ NComp (Res t) (Res u)) (sigOp $ SigC $ NComp (Res s) (Res u))
+  rhoVT (NS'' t s) = \u -> sigOp $ SigC $ NComp (sigOp $ SigC $ NComp (Res t) (Res u)) 
+                                                (sigOp $ SigC $ NComp (Res s) (Res u))
   rhoVT (VPar t s) = \u -> sigOp $ SigC $ Par (sigOp $ SigC $ NComp (Res t) (Res u)) (sigOp $ SigC $ NComp (Res s) (Res u))
 
   rhoCT :: NDxCLC (x, SepBehT [] (->) x y) x -> [Free (SepSig NDxCLV NDxCLC) (Either x y)]
@@ -457,8 +459,7 @@ data CBVxCLV1 x
   | Scbv1'' x x
   deriving (Functor)
 
-data CBVxCLC1 x y 
-  = Compcbv1 x x
+data CBVxCLC1 x y = Compcbv1 x x
 
 instance Functor (CBVxCLC1 a) where
   fmap :: (b -> c) -> CBVxCLC1 a b -> CBVxCLC1 a c

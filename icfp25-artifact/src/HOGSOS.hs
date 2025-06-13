@@ -3,14 +3,12 @@
 Module      : HOGSOS
 Description : Higher-order GSOS (HO-GSOS) specification format 
 
-This module defines the HOGSOS type class and a genertic definition of the operational model gamma.
+This module defines the HOGSOS type class and a generic definition of the operational model gamma.
 
 It includes:
 
-- The `HOGSOS` type class for specifying small-step operational semantics
-- The `gamma` function (operational model) for executing the operational semantics
-- An instance for the xCL calculus
-- A test function `tryEval` for evaluating transitions
+- The `HOGSOS` type class for specifying small-step operational semantics, including 
+the operational model gamma for executing the operational semantics
 
 This module provides the general framework for specifying and interpreting
 higher-order operational semantics, as discussed in the paper.

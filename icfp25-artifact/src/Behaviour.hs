@@ -1,24 +1,23 @@
 {-|
-Module      : Behaviour
-Description : Definitions related to defining (mixed-variance) functors for behaviours
-and examples
 
-This module defines the `MixFunctor` type class and instances for modeling
+Module      : Behaviour
+Description : General definitions related to modelling higher-order behaviors
+as (mixed-variance) functors
+
+This module defines the `MixFunctor` type class and instances for 
 behaviors in a higher-order setting. It includes:
 
 - `MixFunctor` type class for mixed-variance functors
-- The `Beh` data type for deterministic behavior
 - Relevant instance declarations 
 
 This module abstracts over the structure of behavioral functors and is used
-in both HoGSOS and Separated HoGSOS specifications.
+in both HO-GSOS and Separated HO-GSOS specifications.
+
 -}
 
 module Behaviour where
 
 import Control.Arrow ((&&&)) -- For arrows to a product object.
-
--- The behavior functor in the paper:
 
 -- The class of mixed-variance functors in Haskell.
 class MixFunctor f where
@@ -39,8 +38,6 @@ instance MixFunctor Beh where
   mvmap :: (a -> b) -> (c -> d) -> Beh b c -> Beh a d
   mvmap f g (Red y)  = Red (g y)
   mvmap f g (Eval h) = Eval (g . h . f) 
-
--- Separated non-deterministic xCL behavior: **TODO** where?
 
 -- The arrow as a behavior mixed-variance functor.
 instance MixFunctor (->) where

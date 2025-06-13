@@ -1,17 +1,18 @@
 {-|
+
 Module      : Separable
-Description : Separated HO-GSOS and operational semantics for non-deterministic calculi
+Description : Separated HO-GSOS specification format
 
-This module defines the separated syntax and behavior functors, and implements
-the Separated HO-GSOS specification format. It includes:
+This module defines the abstract separated HO-GSOS specification format. It includes:
 
-- Definitions of separated syntax functors (Σ_v and Σ_c)
-- Mixed-variance behavior functors (with and without monads)
-- Operational semantics via `gammaV`, `gammaC`, and multi-step transitions `beta`, `hatbeta`
-- Instances for non-deterministic xCL and its operational rules
+- Definition of "separated" signature ``SepSig'`` (accommodating Σ_v and Σ_c)
+- Mixed-variance behavior functors (effectless ``SepBeh`` and effectful ``SepBehT`` versions)
+- Operational semantics via `gammaV`, `gammaC`
+- Multi-step transition functions `beta`, `betahat`, betaT`, `betahatT`
 
 This module provides a refinement of HO-GSOS based on separation between computation and values 
 for syntax and behavior.
+
 -}
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
@@ -27,9 +28,6 @@ import Control.Monad (join)
 import Syntax 
 import Behaviour (MixFunctor(..), Beh (Eval, Red))
 import HOGSOS (HOGSOS(..), gamma)
-
--- Definitions related to separated HO-GSOS laws:
--- We have also defined the Beta function (the multi-step transition) in the paper as a function of the class of separated HO-GSOS laws.
 
 -- Separated syntax functor (the bifunctor Sigma').
 data SepSig' sv sc x y = SigV (sv y) | SigC (sc x y)
@@ -52,26 +50,25 @@ instance (Functor sv, Bifunctor sc) => Bifunctor (SepSig' sv sc) where
   bimap f g (SigV t) = SigV $ fmap g t
   bimap f g (SigC t) = SigC $ bimap f g t
 
--- Separated behaviour functor without effects.
+-- Effectless "separated" behaviour functor.
 data SepBeh d x y = BehV (d x y) | BehC y
--- Separated behaviour functor with the effect monad t.
--- newtype SepBehT t d x y = SepBehT (t (SepBeh d x y))
+
+-- (Effectful) "separated" behaviour functor.
 data SepBehT t d x y = BehVT (t (d x y)) | BehCT (t y)
 
--- Instantiating separated behaviour bifunctor without effects as a mixed-variance functor.
+-- Instantiating separated effectless behaviour type constructor as a mixed-variance functor.
 instance (MixFunctor d) => MixFunctor (SepBeh d) where
   mvmap :: (a -> b) -> (c -> e) -> SepBeh d b c -> SepBeh d a e
   mvmap f g (BehV u) = BehV $ mvmap f g u
   mvmap f g (BehC u) = BehC $ g u
 
--- Instantiating separated behaviour with the effect monad t as a mixed-variance functor.
+-- Instantiating separated effectful behaviour type constructor as a mixed-variance functor.
 instance (Functor t, MixFunctor d) => MixFunctor (SepBehT t d) where
   mvmap :: (a -> b) -> (c -> e) -> SepBehT t d b c -> SepBehT t d a e
-  -- mvmap f g (SepBehT u) = SepBehT $ fmap (mvmap f g) u
   mvmap f g (BehVT u) = BehVT $ fmap (mvmap f g) u
   mvmap f g (BehCT u) = BehCT $ fmap g u
 
--- Separable HO-GSOS: version without a monad
+-- Separable HO-GSOS: effectless version
 class (MixFunctor d, Functor sv, Bifunctor sc) => SepHOGSOS sv sc d where
   rhoV :: sv x -> d x (Free (SepSig sv sc) x)
   rhoC :: sc (x, SepBeh d x y) x -> Free (SepSig sv sc) (Either x y)
@@ -96,19 +93,18 @@ class (MixFunctor d, Functor sv, Bifunctor sc) => SepHOGSOS sv sc d where
     Cont (Mrg (SigC t)) -> beta p t
 
   -- Multi-step transition for rhoC (variant).
-  hatbeta :: (Functor sv, Bifunctor sc, MixFunctor d, SepHOGSOS sv sc d)
+  betahat :: (Functor sv, Bifunctor sc, MixFunctor d, SepHOGSOS sv sc d)
     => Proxy d -> Initial (SepSig sv sc) -> InitialV sv sc
-  hatbeta (p :: Proxy d) (Cont (Mrg (SigV v))) = v
-  hatbeta (p :: Proxy d) (Cont (Mrg (SigC c))) = hatbeta p (gammaC p c)
+  betahat (p :: Proxy d) (Cont (Mrg (SigV v))) = v
+  betahat (p :: Proxy d) (Cont (Mrg (SigC c))) = betahat p (gammaC p c)
 
-
--- Instantiating separated laws as HO-GSOS laws.
+-- Effectless Separated HO-GSOS as HO-GSOS.
 instance (SepHOGSOS sv sc d) => HOGSOS (SepSig' sv sc) (SepBeh d) where
   rho :: SepSig' sv sc (x, SepBeh d x y) x -> SepBeh d x (Free (SepSig sv sc) (Either x y))
   rho (SigV v) = BehV $ mvmap id (fmap Left) (rhoV v)
   rho (SigC c) = BehC $ rhoC c
 
--- Separable HO-GSOS: version with a monad.
+-- Separable HO-GSOS: effectful version.
 class (Functor sv, Bifunctor sc, MixFunctor d, Monad t) => SepHOGSOST sv sc d t where
   rhoVT :: sv x -> d x (Free (SepSig sv sc) x)
   rhoCT :: sc (x, SepBehT t d x y) x -> t (Free (SepSig sv sc) (Either x y))
@@ -136,7 +132,7 @@ class (Functor sv, Bifunctor sc, MixFunctor d, Monad t) => SepHOGSOST sv sc d t 
   betahatT (p :: Proxy d) (Cont (Mrg (SigV v))) = return v
   betahatT (p :: Proxy d) (Cont (Mrg (SigC c))) = betaT p c
 
--- Instantiating separated laws with a monad as HO-GSOS laws.
+-- Effectful Separated HO-GSOS as HO-GSOS.
 instance (SepHOGSOST sv sc d t) => HOGSOS (SepSig' sv sc) (SepBehT t d) where
   rho :: SepSig' sv sc (x, SepBehT t d x y) x -> SepBehT t d x (Free (SepSig sv sc) (Either x y))
   rho (SigV v) = BehVT $ return $ mx_second (fmap Left) (rhoVT @_ @_ @d @t v)

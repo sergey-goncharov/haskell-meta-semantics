@@ -1,6 +1,7 @@
+
 {-|
 Module      : Benchmarks
-Description : Benchmark definitions and test runners for testing semantics
+Description : Benchmarks and test runners for testing examples from ``Examples.hs``
 
 This module defines benchmark terms and test functions for evaluating:
 
@@ -18,6 +19,7 @@ Each language has:
 
 To run a test, simply evaluate the corresponding function in GHCi. 
 Ensure the input types match the expected signatures for each test case.
+
 -}
 
 module Benchmarks where

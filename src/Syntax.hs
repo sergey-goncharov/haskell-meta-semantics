@@ -1,14 +1,12 @@
 {-|
-Module      : Syntax
-Description : Core syntax definitions
 
-This module defines general syntax-related definitions as well as concrete definition of 
-syntax of xCL and its variants.
+Module      : Syntax
+Description : General definitions for modelling syntax
+
+This module defines general concepts for modelling syntax via functors and free monads.
 
 It includes:
 
-- Syntax for xCL, NDxCL (nondeterministic xCL)
-- Functor and bifunctor instance declarations for the relevant example syntax functors
 - The free monad construction over syntax functors
 - Initial algebra of terms as a special case of the free monad construction
 - Pretty-printing and equality instances for terms
