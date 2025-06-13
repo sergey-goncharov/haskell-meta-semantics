@@ -26,7 +26,7 @@ import Data.Proxy ( Proxy(Proxy) )
 import Data.Bifunctor ( Bifunctor(bimap, first, second) )
 import Control.Monad (join, (<=<))
 import Control.Arrow ((&&&))
-import Syntax (XCL, sigOp, Free (Cont, Res), NDxCLC(..), NDxCLV(..), Initial, Mrg (Mrg))
+import Syntax
 import Behaviour ( MixFunctor(mx_second) )
 import Separable (SepSig, SepSig'(SigV, SigC), SepHOGSOST(rhoVT, rhoCVT, chi), InitialV, InitialC, SepHOGSOS (rhoV, rhoCV) )
 
@@ -74,8 +74,4 @@ instance (Bifunctor sc, Functor sv, Monad t, SepHOGSOST sv sc d t) => BSSOST d s
           where nabla = either id id
   bs_chi :: SepHOGSOST sv sc d t => sc (t x) y -> t (sc x y)
   bs_chi = chi @sv @sc @d @t
-
--- The test function for the operational model of xi for non-deterministic xCL.
-tryEvalZT :: Initial (SepSig NDxCLV NDxCLC) -> [InitialV NDxCLV NDxCLC]
-tryEvalZT = zetahatT @(->) @NDxCLV @NDxCLC @[]
 
