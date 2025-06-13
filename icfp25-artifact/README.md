@@ -12,9 +12,9 @@ The files inside the ``src`` folder are subject to the following dependencies:
 ┌───────────┐    ┌──────────────┐    ┌───────────┐    ┌──────────────┐    ┌────────────┐    ┌─────────────┐    ┌───────────────┐
 │ Syntax.hs │───►│ Behaviour.hs │───►│ HOGSOS.hs │───►│ Separable.hs │───►│ BigStep.hs │───►│ Examples.hs │───►│ Benchmarks.hs │
 └───────────┘    └──────────────┘    └───────────┘    └──────────────┘    └────────────┘    └─────────────┘    └───────────────┘
-                                                                                             ┌──────────┐              ▲       
-                                                                                             │ Utils.hs │──────────────┘       
-                                                                                             └──────────┘                      
+                                                                                               ┌──────────┐            ▲       
+                                                                                               │ Utils.hs │────────────┘       
+                                                                                               └──────────┘                      
 ```
 
 ## Source File Contents

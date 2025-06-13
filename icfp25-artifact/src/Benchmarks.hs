@@ -27,14 +27,14 @@ import Data.Bifunctor ( Bifunctor(bimap, first, second) )
 import Control.Monad (join, (<=<))
 import Control.Arrow ((&&&))
 import Syntax 
-import HOGSOS ( tryEval )
 import Separable 
-import BigStep ( tryEvalZT )
 import Examples
 import Utils
 
-------------------------------------------------------------------------------
--- Testing multistep and big-step reductions for Example 2.1.
+-------------------------------------------------------------------------------
+-- SECTION 2: ArtV/ArtC Example Language
+-------------------------------------------------------------------------------
+
 benchmarkArt :: [InitialC ArtV ArtC]
 benchmarkArt = [
   F $ sigOp $ SigC $ F $ sigOp $ SigV $ G $ sigOp $ SigC Omega
@@ -49,13 +49,14 @@ testArtZeta :: [InitialV ArtV ArtC]
 testArtZeta = fmap tryEvalZArt benchmarkArt
 
 testArtZetaAgreement :: IO ()
-testArtZetaAgreement = do putStrLn $ "Example terms: " ++ show benchmarkArt;  compareLists testArtBeta testArtZeta
+testArtZetaAgreement = do
+  putStrLn $ "Example terms: " ++ show benchmarkArt
+  compareLists testArtBeta testArtZeta
 
-------------------------------------------------------------------------------
--- Testing behaviour for xCL:
--- Type: Initial XCL -> Initial XCL -> Either (Initial XCL) (Initial XCL)
--- For this case, please input a list of pairs. The second argument is the label.
--- However, for non-value terms, the second argument will not take effect. Those are silent transitions.
+-------------------------------------------------------------------------------
+-- SECTION 1: xCL (Extended Combinatory Logic)
+-------------------------------------------------------------------------------
+
 benchmarkxCL :: [(Initial XCL, Initial XCL)]
 benchmarkxCL = [
   (sigOp K , sigOp I)
@@ -90,8 +91,6 @@ benchmarkCnxCL = [
 testnxCLGammaC :: [[Initial (SepSig NDxCLV NDxCLC)]]
 testnxCLGammaC = fmap tryEvalCT benchmarkCnxCL
 
-------------------------------------------------------------------------------
--- Testing multistep and big-step reductions for non-deterministic xCL:
 benchmarknxCL :: [Initial (SepSig NDxCLV NDxCLC)]
 benchmarknxCL = [
   sigOp $ SigV NI
@@ -112,10 +111,20 @@ testnxCLZeta :: [[InitialV NDxCLV NDxCLC]]
 testnxCLZeta = fmap tryEvalZT benchmarknxCL
 
 testnxCLZetaAgreement :: IO ()
-testnxCLZetaAgreement = do putStrLn $ "Example terms: " ++ show benchmarknxCL;  compareLists testnxCLBeta testnxCLZeta
+testnxCLZetaAgreement = do
+  putStrLn $ "Example terms: " ++ show benchmarknxCL
+  compareLists testnxCLBeta testnxCLZeta
 
-------------------------------------------------------------------------------
--- Testing multistep and big-step reductions for CBV1:
+-------------------------------------------------------------------------------
+-- SECTION 4: xCL with Parallel Composition (VxCLParal, CxCLParal)
+-------------------------------------------------------------------------------
+
+-- (No benchmarks provided for this section in the original file.)
+
+-------------------------------------------------------------------------------
+-- SECTION 5: Call-by-Value xCL (CBVxCLV1, CBVxCLC1)
+-------------------------------------------------------------------------------
+
 benchmarkCBV1 :: [InitialC CBVxCLV1 CBVxCLC1]
 benchmarkCBV1 = [
   Compcbv1 (sigOp $ SigC $ Compcbv1 (sigOp $ SigV Scbv1) (sigOp $ SigV Kcbv1)) (sigOp $ SigV Icbv1)
@@ -130,10 +139,14 @@ testCBV1Zeta :: [InitialV CBVxCLV1 CBVxCLC1]
 testCBV1Zeta = fmap tryEvalZCBW benchmarkCBV1
 
 testCBV1ZetaAgreement :: IO ()
-testCBV1ZetaAgreement = do putStrLn $ "Example terms: " ++ show benchmarkCBV1;  compareLists testCBV1Beta testCBV1Zeta
+testCBV1ZetaAgreement = do
+  putStrLn $ "Example terms: " ++ show benchmarkCBV1
+  compareLists testCBV1Beta testCBV1Zeta
 
-------------------------------------------------------------------------------
--- Testing multistep and big-step reductions for CBV2:
+-------------------------------------------------------------------------------
+-- SECTION 6: Call-by-Value xCL (CBVxCLV2, CBVxCLC2)
+-------------------------------------------------------------------------------
+
 benchmarkCBV2 :: [InitialC CBVxCLV2 CBVxCLC2]
 benchmarkCBV2 = [
   Compcbv2 (sigOp $ SigC $ Compcbv2 (sigOp $ SigV Scbv2) (sigOp $ SigV Kcbv2)) (sigOp $ SigV Icbv2)
@@ -148,10 +161,14 @@ testCBV2Zeta :: [InitialV CBVxCLV2 CBVxCLC2]
 testCBV2Zeta = fmap tryEvalZCBU benchmarkCBV2
 
 testCBV2ZetaAgreement :: IO ()
-testCBV2ZetaAgreement = do putStrLn $ "Example terms: " ++ show benchmarkCBV2;  compareLists testCBV2Beta testCBV2Zeta
+testCBV2ZetaAgreement = do
+  putStrLn $ "Example terms: " ++ show benchmarkCBV2
+  compareLists testCBV2Beta testCBV2Zeta
 
-------------------------------------------------------------------------------
--- Testing multistep and big-step reductions for CBV3:
+-------------------------------------------------------------------------------
+-- SECTION 7: Call-by-Value xCL (CBVxCLV3, CBVxCLC3)
+-------------------------------------------------------------------------------
+
 benchmarkCBV3 :: [InitialC CBVxCLV3 CBVxCLC3]
 benchmarkCBV3 = [
   Compcbv3 (sigOp $ SigC $ Compcbv3 (sigOp $ SigV Scbv3) (sigOp $ SigV Kcbv3)) (sigOp $ SigV Icbv3)
@@ -166,10 +183,14 @@ testCBV3Zeta :: [InitialV CBVxCLV3 CBVxCLC3]
 testCBV3Zeta = fmap tryEvalZCBV benchmarkCBV3
 
 testCBV3ZetaAgreement :: IO ()
-testCBV3ZetaAgreement = do putStrLn $ "Example terms: " ++ show benchmarkCBV3; compareLists testCBV3Beta testCBV3Zeta
+testCBV3ZetaAgreement = do
+  putStrLn $ "Example terms: " ++ show benchmarkCBV3
+  compareLists testCBV3Beta testCBV3Zeta
 
+-------------------------------------------------------------------------------
+-- Run all benchmarks
+-------------------------------------------------------------------------------
 
--- | Run all benchmark tests and print results to the console
 runAllBenchmarks :: IO ()
 runAllBenchmarks = do
   putStrLn "=== Running Benchmarks for Art ==="
@@ -192,6 +213,5 @@ runAllBenchmarks = do
   testCBV3ZetaAgreement
   putStrLn ""
 
--- | Entry point for the artifact
 main :: IO ()
 main = runAllBenchmarks
