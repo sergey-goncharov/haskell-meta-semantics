@@ -168,5 +168,30 @@ testCBV3Zeta = fmap tryEvalZCBV benchmarkCBV3
 testCBV3ZetaAgreement :: IO ()
 testCBV3ZetaAgreement = do putStrLn $ "Example terms: " ++ show benchmarkCBV3; compareLists testCBV3Beta testCBV3Zeta
 
+
+-- | Run all benchmark tests and print results to the console
+runAllBenchmarks :: IO ()
+runAllBenchmarks = do
+  putStrLn "=== Running Benchmarks for Art ==="
+  testArtZetaAgreement
+  putStrLn ""
+
+  putStrLn "=== Running Benchmarks for NDxCL ==="
+  testnxCLZetaAgreement
+  putStrLn ""
+
+  putStrLn "=== Running Benchmarks for CBV1 ==="
+  testCBV1ZetaAgreement
+  putStrLn ""
+
+  putStrLn "=== Running Benchmarks for CBV2 ==="
+  testCBV2ZetaAgreement
+  putStrLn ""
+
+  putStrLn "=== Running Benchmarks for CBV3 ==="
+  testCBV3ZetaAgreement
+  putStrLn ""
+
+-- | Entry point for the artifact
 main :: IO ()
-main = putStrLn "Benchmarks running..."
+main = runAllBenchmarks

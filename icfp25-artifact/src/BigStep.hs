@@ -21,6 +21,7 @@ and a translation from small-step to big-step semantics thorugh an instance decl
 
 module BigStep where
 
+import Data.Kind
 import Data.Proxy ( Proxy(Proxy) )
 import Data.Bifunctor ( Bifunctor(bimap, first, second) )
 import Control.Monad (join, (<=<))
@@ -28,6 +29,7 @@ import Control.Arrow ((&&&))
 import Syntax (XCL, sigOp, Free (Cont, Res), NDxCLC(..), NDxCLV(..), Initial, Mrg (Mrg))
 import Behaviour ( MixFunctor(mx_second) )
 import Separable (SepSig, SepSig'(SigV, SigC), SepHOGSOST(rhoVT, rhoCVT, chi), InitialV, InitialC, SepHOGSOS (rhoV, rhoCV) )
+
 
 -- Definitions related to Big-step SOS:
 
@@ -44,7 +46,7 @@ class (Functor sv, Bifunctor sc) => BSSOS d sv sc where
   zeta = zetahat @d . sigOp . SigC
 
 -- Deriving big-step specification from a separated HO-GSOS law.
-instance (SepHOGSOS sv sc d) => BSSOS (d :: * -> * -> *) sv sc where
+instance (Bifunctor sc, Functor sv, SepHOGSOS sv sc d) => BSSOS (d :: Type -> Type -> Type) sv sc where
   xi :: sc (sv x) x -> Free (SepSig sv sc) x
   xi t =
     rhoCV (bimap ((sigOp . SigV &&& mx_second @d join . rhoV) . fmap return)
@@ -65,7 +67,7 @@ class (Functor sv, Bifunctor sc, Monad t) => BSSOST a sv sc t where
   zetaT = zetahatT @a . sigOp . SigC
 
 -- Deriving big-step specification from a separated HO-GSOS law with monad.
-instance (SepHOGSOST sv sc d t) => BSSOST d sv sc t where
+instance (Bifunctor sc, Functor sv, Monad t, SepHOGSOST sv sc d t) => BSSOST d sv sc t where
   xiT :: SepHOGSOST sv sc d t => sc (sv x) x -> t (Free (SepSig sv sc) x)
   xiT = fmap (>>= nabla) . rhoCVT . 
         bimap (sigOp . SigV . fmap return &&& (return . mx_second @d join . rhoVT @_ @_ @_ @t . fmap return)) return

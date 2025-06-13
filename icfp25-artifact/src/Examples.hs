@@ -38,6 +38,11 @@ data ArtC x y
   = F x 
   | Omega
 
+instance Functor (ArtC a) where
+  fmap :: (b -> c) -> ArtC a b -> ArtC a c
+  fmap f (F x) = F x
+  fmap _ Omega = Omega
+
 instance Bifunctor ArtC where
   bimap :: (a -> b) -> (c -> d) -> ArtC a c -> ArtC b d
   bimap f _ (F x) = F (f x)
@@ -106,6 +111,11 @@ data VxCLParal x
 data CxCLParal x y 
   = CompParal x y 
   | Paral' x x
+
+instance Functor (CxCLParal a) where
+  fmap :: (b -> c) -> CxCLParal a b -> CxCLParal a c
+  fmap f (CompParal x y) = CompParal x (f y)
+  fmap f (Paral' x x') = Paral' x x'
 
 instance Bifunctor CxCLParal where
   bimap :: (a -> b) -> (c -> d) -> CxCLParal a c -> CxCLParal b d
@@ -210,6 +220,10 @@ data CBVxCLV1 x
 data CBVxCLC1 x y 
   = Compcbv1 x x
 
+instance Functor (CBVxCLC1 a) where
+  fmap :: (b -> c) -> CBVxCLC1 a b -> CBVxCLC1 a c
+  fmap f (Compcbv1 x y) = Compcbv1 x y
+  
 instance Bifunctor CBVxCLC1 where
   bimap :: (a -> b) -> (c -> d) -> CBVxCLC1 a c -> CBVxCLC1 b d
   bimap f g (Compcbv1 x y) = Compcbv1 (f x) (f y)
@@ -298,6 +312,10 @@ data CBVxCLV2 x
 
 data CBVxCLC2 x y 
   = Compcbv2 x x
+
+instance Functor (CBVxCLC2 a) where
+  fmap :: (b -> c) -> CBVxCLC2 a b -> CBVxCLC2 a c
+  fmap f (Compcbv2 x y) = Compcbv2 x y
 
 instance Bifunctor CBVxCLC2 where
   bimap :: (a -> b) -> (c -> d) -> CBVxCLC2 a c -> CBVxCLC2 b d
@@ -389,6 +407,12 @@ data CBVxCLC3 x y
   = Compcbv3 x y 
   | TCompcbv3 x y 
   | RCompcbv3 y x
+
+instance Functor (CBVxCLC3 a) where
+  fmap :: (b -> c) -> CBVxCLC3 a b -> CBVxCLC3 a c
+  fmap f (Compcbv3 x y) = Compcbv3 x (f y)
+  fmap f (TCompcbv3 x y) = TCompcbv3 x (f y)
+  fmap f (RCompcbv3 x y) = RCompcbv3 (f x) y
 
 instance Bifunctor CBVxCLC3 where
   bimap :: (a -> b) -> (c -> d) -> CBVxCLC3 a c -> CBVxCLC3 b d
