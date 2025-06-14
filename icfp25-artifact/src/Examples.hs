@@ -12,7 +12,7 @@ its variants. It includes:
 - Evaluation functions for testing operational semantics
 
 These examples are used in benchmarks (``Benchmarks.hs``) and serve to demonstrate the expressiveness
-of the separated HO-GSOS framework and tests the translation from small-step to big-step semantics.
+of the separated HO-GSOS framework and to test the translation from small-step to big-step semantics.
 
 -}
 
@@ -21,19 +21,21 @@ module Examples where
 
 import Data.Proxy ( Proxy(Proxy) )
 import Data.Bifunctor ( Bifunctor(bimap, first, second) )
+
 import Control.Monad (join, (<=<))
 import Control.Arrow ((&&&))
+
 import Syntax
-import Behaviour (MixFunctor(mx_second), Beh (Eval, Red))
+import Behaviour (MixFunctor(..), Beh (Eval, Red), SepBehT, SepBeh, SepBehT(..), SepBeh(..))
 import HOGSOS
 import Separable
-import BigStep ( BSSOS(zeta) , zetahatT)
+import BigStep 
 
 -------------------------------------------------------------------------------
 -- SECTION 1: xCL (Extended Combinatory Logic)
 -------------------------------------------------------------------------------
 
--- | Syntax for xCL 
+-- | Syntax for xCL (Display (1)).
 data XCL' x y 
   = S 
   | K 
@@ -43,7 +45,9 @@ data XCL' x y
   | S'' x x 
   | Comp x y 
 
--- | Value part of the xCL syntax.
+type XCL = Mrg XCL' -- XCL as a functor (an instance of Sigma in the paper).
+
+-- | Value part of the xCL syntax (Exp. 3.3).
 data XCLV x 
   = Sv 
   | Kv 
@@ -53,7 +57,7 @@ data XCLV x
   | S''v x x 
   deriving (Functor)
 
--- | Computation part of the xCL syntax.
+-- | Computation part of the xCL syntax (Exp. 3.3).
 data XCLC x y = Compc x y 
 
 instance Functor (XCLC x) where
@@ -63,8 +67,6 @@ instance Functor (XCLC x) where
 instance Bifunctor XCLC where
   bimap :: (a -> b) -> (c -> d) -> XCLC a c -> XCLC b d
   bimap f g (Compc x y) = Compc (f x) (g y)
-
-type XCL = Mrg XCL' -- XCL as a functor (an instance of Sigma in the paper).
 
 instance Functor (XCL' x) where
   fmap :: (a -> b) -> XCL' x a -> XCL' x b 
@@ -86,7 +88,7 @@ instance Bifunctor XCL' where
   bimap f g (S'' x y) = S'' (f x) (f y)
   bimap f g (Comp x y) = Comp (f x) (g y)
 
--- HO-GSOS instance for xCL
+-- HO-GSOS instance for xCL (Sec 2.1., didactic purpose only)
 instance HOGSOS XCL' Beh where
   rho :: XCL' (x, Beh x y) x -> Beh x (Free XCL (Either x y))
   rho S = Eval $ sigOp . S' . Res . Left
@@ -98,21 +100,6 @@ instance HOGSOS XCL' Beh where
                                                       (sigOp $ Comp (Res $ Left u) (Res $ Left t))
   rho (Comp (_, Red s) u) = Red $ sigOp $ Comp (Res $ Right s) (Res $ Left u)
   rho (Comp (_, Eval f) u) = Red $ Res (Right $ f u)
-
--- SepHOGSOS instance for xCL
-instance SepHOGSOS XCLV XCLC (->) where
-  rhoV :: XCLV x -> x -> Free (SepSig XCLV XCLC) x
-  rhoV Sv = sigOp . SigV . S'v . Res
-  rhoV Kv = sigOp . SigV . K'v . Res
-  rhoV Iv = Res
-  rhoV (S'v t) = sigOp . SigV . S''v (Res t) . Res
-  rhoV (K'v t) = const (Res t)
-  rhoV (S''v t s) = \u -> sigOp $ SigC $ Compc (sigOp $ SigC $ Compc (Res t) (Res u)) 
-                                               (sigOp $ SigC $ Compc (Res s) (Res u))
- 
-  rhoC :: XCLC (x, SepBeh (->) x y) x -> Free (SepSig XCLV XCLC) (Either x y)
-  rhoC (Compc (_, BehC s) u) = sigOp (SigC $ Compc (Res $ Right s) (Res $ Left u))
-  rhoC (Compc (_, BehV f) u) = Res (Right $ f u) 
 
 -- Test function for xCL
 tryEval :: Initial XCL -> Initial XCL -> Either (Initial XCL) (Initial XCL)
@@ -129,17 +116,88 @@ instance Show (Initial XCL) where
   show (Cont (Mrg (K' t))) = "(K'" ++ show t ++ ")"
   show (Cont (Mrg I)) = "I"
   show (Cont (Mrg (Comp t s))) = "(" ++ show t ++ " * " ++ show s ++ ")"
+  
+-- SepHOGSOS instance for xCL (Exp. 3.3)
+instance SepHOGSOS XCLV XCLC (->) where
+  rhoV :: XCLV x -> x -> Free (SepSig XCLV XCLC) x
+  rhoV Sv = sigOp . SigV . S'v . Res
+  rhoV Kv = sigOp . SigV . K'v . Res
+  rhoV Iv = Res
+  rhoV (S'v t) = sigOp . SigV . S''v (Res t) . Res
+  rhoV (K'v t) = const (Res t)
+  rhoV (S''v t s) = \u -> sigOp $ SigC $ Compc (sigOp $ SigC $ Compc (Res t) (Res u)) 
+                                               (sigOp $ SigC $ Compc (Res s) (Res u))
+ 
+  rhoC :: XCLC (x, SepBeh (->) x y) x -> Free (SepSig XCLV XCLC) (Either x y)
+  rhoC (Compc (_, BehC s) u) = sigOp (SigC $ Compc (Res $ Right s) (Res $ Left u))
+  rhoC (Compc (_, BehV f) u) = Res (Right $ f u) 
+
+instance Show (Initial (SepSig XCLV XCLC)) where
+  show :: Initial (SepSig XCLV XCLC) -> String
+  show (Cont (Mrg (SigV Sv))) = "S"
+  show (Cont (Mrg (SigV (S'v t)))) = "S'(" ++ show t ++ ")"
+  show (Cont (Mrg (SigV (S''v s t)))) = "S''(" ++ show s ++ ", " ++ show t ++ ")"
+  show (Cont (Mrg (SigV Kv))) = "K"
+  show (Cont (Mrg ((SigV (K'v t))))) = "K'(" ++ show t ++ ")"
+  show (Cont (Mrg (SigV Iv))) = "I"
+  show (Cont (Mrg (SigC (Compc t s)))) = "(" ++ show t ++ " * " ++ show s ++ ")"
+
+instance Eq (Initial (SepSig XCLV XCLC)) where
+  (==) :: Initial (SepSig XCLV XCLC) -> Initial (SepSig XCLV XCLC) -> Bool
+  Cont (Mrg (SigV Sv)) == Cont (Mrg (SigV Sv)) = True
+  Cont (Mrg (SigV Kv)) == Cont (Mrg (SigV Kv)) = True
+  Cont (Mrg (SigV Iv)) == Cont (Mrg (SigV Iv)) = True
+  Cont (Mrg (SigV (S'v t))) == Cont (Mrg (SigV (S'v s))) = t == s
+  Cont (Mrg (SigV (K'v t))) == Cont (Mrg (SigV (K'v s))) = t == s
+  Cont (Mrg (SigV (S''v s t)))  == Cont (Mrg (SigV (S''v s' t'))) = (s == s') && (t == t')
+  Cont (Mrg (SigC (Compc t s))) == Cont (Mrg (SigC (Compc t' s'))) = (t==t') && (s==s')
+  _ == _ = False
+
+instance Show (InitialV XCLV XCLC) where
+  show Sv = "S"
+  show (S'v t) = "S'(" ++ show t ++ ")"
+  show (S''v s t) = "S''(" ++ show s ++ ", " ++ show t ++ ")"
+  show Kv = "K"
+  show (K'v t) = "K'(" ++ show t ++ ")"
+  show Iv = "I"
+ 
+instance Eq (InitialV XCLV XCLC) where
+  (==) :: InitialV XCLV XCLC -> InitialV XCLV XCLC -> Bool
+  Sv == Sv = True
+  (S'v t) == (S'v t') = t == t'
+  (S''v s t) == (S''v s' t') = (s==s') && (t==t')
+  Kv == Kv = True
+  (K'v t) == (K'v t') = t==t'
+  Iv == Iv = True
+  _ == _ = False
+
+instance Show (InitialC XCLV XCLC) where
+  show (Compc t s) = "(" ++ show t ++ " * " ++ show s ++ ")"
+
+instance Eq (InitialC XCLV XCLC) where
+  Compc t s == Compc t' s' = (t == t') && (s==s')
+
+-- Test functions for XCL
+tryEvalVxCL :: InitialV XCLV XCLC -> Initial (SepSig XCLV XCLC) -> Initial (SepSig XCLV XCLC)
+tryEvalVxCL = gammaV
+
+tryEvalCxCL :: InitialC XCLV XCLC -> Initial (SepSig XCLV XCLC)
+tryEvalCxCL = gammaC @XCLV @XCLC @(->) Proxy
+
+tryEvalBxCL :: Initial (SepSig XCLV XCLC) -> InitialV XCLV XCLC
+tryEvalBxCL = betahat @XCLV @XCLC @(->) Proxy
+
+tryEvalZxCL :: Initial (SepSig XCLV XCLC) -> InitialV XCLV XCLC
+tryEvalZxCL = zetahat @(->) @XCLV @XCLC 
 
 -------------------------------------------------------------------------------
--- SECTION 2: ArtV/ArtC Example Language
+-- SECTION 2: ArtV/ArtC Example Language (Exp. 2.1)
 -------------------------------------------------------------------------------
 
 newtype ArtV x = G x 
   deriving (Functor)
 
-data ArtC x y 
-  = F x 
-  | Omega
+data ArtC x y = F x | Omega
 
 instance Functor (ArtC a) where
   fmap :: (b -> c) -> ArtC a b -> ArtC a c
@@ -192,6 +250,8 @@ instance Eq (InitialC ArtV ArtC) where
   Omega == Omega = True
   _ == _ = False
 
+-- Test function for ArtV/ArtC
+
 tryEvalBArt :: InitialC ArtV ArtC -> InitialV ArtV ArtC
 tryEvalBArt = beta @ArtV @ArtC @(->) Proxy 
 
@@ -199,7 +259,7 @@ tryEvalZArt :: InitialC ArtV ArtC -> InitialV ArtV ArtC
 tryEvalZArt = zeta @(->) @ArtV @ArtC 
 
 -------------------------------------------------------------------------------
--- SECTION 3: Non-deterministic xCL (NDxCL)
+-- SECTION 3: Non-deterministic xCL (NDxCL), Sec. 6.3
 -------------------------------------------------------------------------------
 
 data NDxCLV x 
@@ -243,24 +303,22 @@ instance SepHOGSOST NDxCLV NDxCLC (->) [] where
 
   rhoCT :: NDxCLC (x, SepBehT [] (->) x y) x -> [Free (SepSig NDxCLV NDxCLC) (Either x y)]
   rhoCT (NComp (s, BehCT (s' : l)) t) = sigOp (SigC $ NComp (Res $ Right s') (Res $ Left t)) : rhoCT @_ @_ @(->) (NComp (s, BehCT l) t)
-  rhoCT (NComp (s, BehVT (f : l)) t)  = Res (Right $ f t) : rhoCT (NComp (s, BehVT l) t)
+  rhoCT (NComp (s, BehVT f) t)  = [ Res (Right $ f t) ]
   rhoCT (NComp (s, BehCT [] ) t) = []
-  rhoCT (NComp (s, BehVT [] ) t) = []
+
   rhoCT (DSum s t) = [Res $ Left s, Res $ Left t]
+ 
   rhoCT (Par (s, BehCT (s' : k)) (t, BehCT (t' : l))) = [sigOp $ SigC $ Par (Res $ Right s') (Res $ Right t')] 
     ++ rhoCT @_ @_ @(->) (Par (s, BehCT (s' : k)) (t, BehCT l)) 
     ++ rhoCT @_ @_ @(->) (Par (s, BehCT k) (t, BehCT (t' :  l)))
-  rhoCT (Par (s, BehVT (f : k)) (t, BehCT (t' : l)))  = [sigOp $ SigC $ Par (Res $ Left s) (Res $ Right t')] 
-    ++ rhoCT @_ @_ @(->) (Par (s, BehVT (f : k)) (t, BehCT l)) 
-    ++ rhoCT @_ @_ @(->) (Par (s, BehVT k) (t, BehCT (t' : l)))
-  rhoCT (Par (s, BehCT (s' : k)) (t, BehVT (g : l)))  = [sigOp $ SigC $ Par (Res $ Right s') (Res $ Left t)] 
-    ++ rhoCT @_ @_ @(->) (Par (s, BehCT (s' : k)) (t, BehVT l)) 
-    ++ rhoCT @_ @_ @(->) (Par (s, BehCT k) (t, BehVT (g : l)))
-  rhoCT (Par (s, BehVT (f : k)) (t, BehVT (g : l)))  = [sigOp $ SigV $ VPar (Res $ Left s) (Res $ Left t)]
-  rhoCT (Par (s, BehCT []) _) = []
-  rhoCT (Par (s, BehVT []) _) = []
+  
+  rhoCT (Par (s, BehVT f) (t, BehCT (t' : l)))  = [sigOp $ SigC $ Par (Res $ Left s) (Res $ Right t')] 
+    ++ rhoCT @_ @_ @(->) (Par (s, BehVT f) (t, BehCT l)) 
+  rhoCT (Par (s, BehCT (s' : k)) (t, BehVT g))  = [sigOp $ SigC $ Par (Res $ Right s') (Res $ Left t)] 
+    ++ rhoCT @_ @_ @(->) (Par (s, BehCT k) (t, BehVT g))
+  rhoCT (Par (s, BehVT _) (t, BehVT _))  = [sigOp $ SigV $ VPar (Res $ Left s) (Res $ Left t)]
+  rhoCT (Par (_, BehCT []) _) = []
   rhoCT (Par _ (t, BehCT [])) = []
-  rhoCT (Par _ (t, BehVT [])) = []
 
   chi :: NDxCLC [x] y -> [NDxCLC x y]
   chi (NComp (x : xs) y) = NComp x y : chi @NDxCLV @NDxCLC @(->) @[] (NComp xs y)
@@ -340,114 +398,7 @@ tryEvalZT :: Initial (SepSig NDxCLV NDxCLC) -> [InitialV NDxCLV NDxCLC]
 tryEvalZT = zetahatT @(->) @NDxCLV @NDxCLC @[]
 
 -------------------------------------------------------------------------------
--- SECTION 4: xCL with Parallel Composition (VxCLParal, CxCLParal)
--------------------------------------------------------------------------------
-
-data VxCLParal x 
-  = SParal 
-  | KParal 
-  | IParal 
-  | SParal' x 
-  | KParal' x 
-  | SParal'' x x 
-  | VParal' x x
-  deriving (Functor)
-
-data CxCLParal x y 
-  = CompParal x y 
-  | Paral' x x
-
-instance Functor (CxCLParal a) where
-  fmap :: (b -> c) -> CxCLParal a b -> CxCLParal a c
-  fmap f (CompParal x y) = CompParal x (f y)
-  fmap f (Paral' x x') = Paral' x x'
-
-instance Bifunctor CxCLParal where
-  bimap :: (a -> b) -> (c -> d) -> CxCLParal a c -> CxCLParal b d
-  bimap f g (CompParal x y) = CompParal (f x) (g y)
-  bimap f g (Paral' x x') = Paral' (f x) (f x')
-
-instance Show (Initial (SepSig VxCLParal CxCLParal)) where
-  show :: Initial (SepSig VxCLParal CxCLParal) -> String
-  show (Cont (Mrg (SigV SParal))) = "S"
-  show (Cont (Mrg (SigV (SParal' t)))) = "S'(" ++ show t ++ ")"
-  show (Cont (Mrg (SigV (SParal'' s t)))) = "S''(" ++ show s ++ "," ++ show t ++ ")"
-  show (Cont (Mrg (SigV KParal))) = "K"
-  show (Cont (Mrg ((SigV (KParal' t))))) = "K'(" ++ show t ++ ")"
-  show (Cont (Mrg (SigV IParal))) = "I"
-  show (Cont (Mrg (SigV (VParal' s t)))) = "(" ++ show s ++ "|V|" ++ show t ++ ")"
-  show (Cont (Mrg (SigC (CompParal t s)))) = "(" ++ show t ++ "." ++ show s ++ ")"
-  show (Cont (Mrg (SigC (Paral' t s)))) = "(" ++ show t ++ "||" ++ show s ++ ")"
-
-instance Eq (Initial (SepSig VxCLParal CxCLParal)) where
-  (==) :: Initial (SepSig VxCLParal CxCLParal) -> Initial (SepSig VxCLParal CxCLParal) -> Bool
-  Cont (Mrg (SigV SParal)) == Cont (Mrg (SigV SParal)) = True
-  Cont (Mrg (SigV (SParal' t))) == Cont (Mrg (SigV (SParal' s))) = t == s
-  Cont (Mrg (SigV (SParal'' s t))) == Cont (Mrg (SigV (SParal'' s' t'))) = (s == s') && (t == t')
-  Cont (Mrg (SigV KParal)) == Cont (Mrg (SigV KParal)) = True
-  Cont (Mrg (SigV (KParal' t))) == Cont (Mrg ((SigV (KParal' s)))) = t == s
-  Cont (Mrg (SigV IParal)) == Cont (Mrg (SigV IParal)) = True
-  Cont (Mrg (SigV (VParal' t s))) == Cont (Mrg (SigV (VParal' t' s'))) = (t == t') && (s == s')
-  Cont (Mrg (SigC (CompParal t s))) == Cont (Mrg (SigC (CompParal t' s'))) = (t == t') && (s == s')
-  Cont (Mrg (SigC (Paral' t s))) == Cont (Mrg (SigC (Paral' t' s'))) = (t == t') && (s == s')
-  _ == _ = False
-
-instance Show (InitialV VxCLParal CxCLParal) where
-  show :: InitialV VxCLParal CxCLParal -> String
-  show SParal = "S"
-  show (SParal' t) = "S'(" ++ show t ++ ")"
-  show (SParal'' s t) = "S''(" ++ show s ++ "," ++ show t ++ ")"
-  show KParal = "K"
-  show (KParal' t) = "K'(" ++ show t ++ ")"
-  show IParal = "I"
-  show (VParal' s t) = "(" ++ show s ++ "|V|" ++ show t ++ ")"
-
-instance Eq (InitialV VxCLParal CxCLParal) where
-  (==) :: InitialV VxCLParal CxCLParal -> InitialV VxCLParal CxCLParal -> Bool
-  SParal == SParal = True
-  (SParal' t) == (SParal' t') = t == t'
-  (SParal'' s t) == (SParal'' s' t') = (s == s') && (t == t')
-  KParal == KParal = True
-  (KParal' t) == (KParal' t') = t == t'
-  IParal == IParal = True
-  (VParal' s t) == (VParal' s' t') = (s == s') && (t == t')
-  _ == _ = False
-
-instance Show (InitialC VxCLParal CxCLParal) where
-  show :: InitialC VxCLParal CxCLParal -> String
-  show (CompParal t s) = "(" ++ show t ++ "." ++ show s ++ ")"
-  show (Paral' t s) = "(" ++ show t ++ "||" ++ show s ++ ")"
-
-instance Eq (InitialC VxCLParal CxCLParal) where
-  (==) :: InitialC VxCLParal CxCLParal -> InitialC VxCLParal CxCLParal -> Bool
-  (CompParal t s) == (CompParal t' s') = (t == t') && (s == s')
-  (Paral' t s) == (Paral' t' s') = (t == t') && (s == s')
-
-instance SepHOGSOS VxCLParal CxCLParal (->) where
-  rhoV :: VxCLParal x -> x -> Free (SepSig VxCLParal CxCLParal) x
-  rhoV SParal = sigOp . SigV . SParal' . Res
-  rhoV KParal = sigOp . SigV . KParal' . Res
-  rhoV IParal = Res
-  rhoV (SParal' s) = sigOp . SigV . SParal'' (Res s) . Res
-  rhoV (KParal' s) = \_ -> Res s
-  rhoV (SParal'' s u) = \t -> sigOp $ SigC $ CompParal (sigOp $ SigC $ CompParal (Res s) (Res t)) (sigOp $ SigC $ CompParal (Res u) (Res t))
-  rhoV (VParal' s u)   = \t -> sigOp $ SigC $ Paral' (sigOp $ SigC $ CompParal (Res s) (Res t)) (sigOp $ SigC $ CompParal (Res u) (Res t))
-  rhoC :: CxCLParal (x, SepBeh (->) x y) x -> Free (SepSig VxCLParal CxCLParal) (Either x y)
-  rhoC (CompParal (t , BehC t') s) = sigOp $ SigC $ CompParal (Res $ Right t') (Res $ Left s)
-  rhoC (CompParal (t , BehV f) s)  = Res $ Right $ f s
-  rhoC (Paral' (t , BehC t') (s , BehC s')) = sigOp $ SigC $ Paral' (Res $ Right t') (Res $ Right s')
-  rhoC (Paral' (t , BehV f) (s , BehC s'))  = sigOp $ SigC $ Paral' (Res $ Left t) (Res $ Right s')
-  rhoC (Paral' (t , BehC t') (s , BehV g))  = sigOp $ SigC $ Paral' (Res $ Right t') (Res $ Left s)
-  rhoC (Paral' (t , BehV f) (s , BehV g))   = sigOp $ SigV $ VParal' (Res $ Left t) (Res $ Left s)
-
-tryEvalBParal :: InitialC VxCLParal CxCLParal -> InitialV VxCLParal CxCLParal
-tryEvalBParal = beta @VxCLParal @CxCLParal @(->) Proxy
-
-tryEvalZParal :: InitialC VxCLParal CxCLParal -> InitialV VxCLParal CxCLParal
-tryEvalZParal = zeta @(->) @VxCLParal @CxCLParal
-
--------------------------------------------------------------------------------
--- SECTION 5: Call-by-Value xCL (CBVxCLV1, CBVxCLC1)
+-- SECTION 4: Call-by-Value xCL (CBVxCLV1, CBVxCLC1), Sec 6.4., with (a) rule
 -------------------------------------------------------------------------------
 
 data CBVxCLV1 x 
@@ -525,11 +476,11 @@ instance SepHOGSOS CBVxCLV1 CBVxCLC1 (->) where
   rhoV (Scbv1' s) = sigOp . SigV . Scbv1'' (Res s) . Res
   rhoV (Kcbv1' s) = \_ -> Res s
   rhoV (Scbv1'' s u) = \t -> sigOp $ SigC $ Compcbv1 (sigOp $ SigC $ Compcbv1 (Res s) (Res t)) (sigOp $ SigC $ Compcbv1 (Res u) (Res t))
+
   rhoC :: CBVxCLC1 (x, SepBeh (->) x y) x -> Free (SepSig CBVxCLV1 CBVxCLC1) (Either x y)
-  rhoC (Compcbv1 (t , BehC t') (s , BehC _)) = sigOp $ SigC $ Compcbv1 (Res $ Right t') (Res $ Left s)
+  rhoC (Compcbv1 (t , BehC t') (s , _)) = sigOp $ SigC $ Compcbv1 (Res $ Right t') (Res $ Left s)
   rhoC (Compcbv1 (t , BehV _) (s , BehC s')) = sigOp $ SigC $ Compcbv1 (Res $ Left t) (Res $ Right s')
   rhoC (Compcbv1 (t , BehV f) (s , BehV _))  = Res $ Right (f s)
-  rhoC (Compcbv1 (t , BehC t') (s , BehV _)) = sigOp $ SigC $ Compcbv1 (Res $ Right t') (Res $ Left s)
 
 tryEvalBCBW :: InitialC CBVxCLV1 CBVxCLC1 -> InitialV CBVxCLV1 CBVxCLC1
 tryEvalBCBW = beta @CBVxCLV1 @CBVxCLC1 @(->) Proxy 
@@ -538,7 +489,7 @@ tryEvalZCBW :: InitialC CBVxCLV1 CBVxCLC1 -> InitialV CBVxCLV1 CBVxCLC1
 tryEvalZCBW = zeta @(->) @CBVxCLV1 @CBVxCLC1 
 
 -------------------------------------------------------------------------------
--- SECTION 6: Call-by-Value xCL (CBVxCLV2, CBVxCLC2)
+-- SECTION 5: Call-by-Value xCL (CBVxCLV2, CBVxCLC2), Sec 6.4., with (a1), (a2) rules
 -------------------------------------------------------------------------------
 
 data CBVxCLV2 x 
@@ -630,7 +581,7 @@ tryEvalZCBU :: InitialC CBVxCLV2 CBVxCLC2 -> InitialV CBVxCLV2 CBVxCLC2
 tryEvalZCBU = zeta @(->) @CBVxCLV2 @CBVxCLC2
 
 -------------------------------------------------------------------------------
--- SECTION 7: Call-by-Value xCL (CBVxCLV3, CBVxCLC3)
+-- SECTION 6: Call-by-Value xCL (CBVxCLV3, CBVxCLC3), Sec 6.4., with additional composition operators
 -------------------------------------------------------------------------------
 
 data CBVxCLV3 x 

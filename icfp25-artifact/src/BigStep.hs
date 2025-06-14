@@ -34,7 +34,7 @@ import Syntax
 import Behaviour ( MixFunctor(mx_second) )
 import Separable (SepSig, SepSig'(SigV, SigC), SepHOGSOST(rhoVT, rhoCVT, chi), InitialV, InitialC, SepHOGSOS (rhoV, rhoCV) )
 
--- | Effectless abstract Big-step SOS without monad.
+-- | Effectless abstract Big-step SOS (Sec 2.1., didactic purpose only)
 class (Functor sv, Bifunctor sc) => BSSOS d sv sc where
   xi :: sc (sv x) x -> Free (SepSig sv sc) x
 
@@ -53,11 +53,12 @@ instance (Bifunctor sc, Functor sv, SepHOGSOS sv sc d) => BSSOS (d :: Type -> Ty
     rhoCV (bimap ((sigOp . SigV &&& mx_second @d join . rhoV) . fmap return) return t) >>= nabla
     where nabla = either id id
 
--- | Abstract Big-step SOS with (effectful).
+-- | Abstract Big-step SOS with (effectful), Def. 4.1
 class (Functor sv, Bifunctor sc, Monad t) => BSSOST a sv sc t where
   xiT :: sc (sv x) x -> t (Free (SepSig sv sc) x)
   bs_chi :: sc (t x) y -> t (sc x y)
 
+  -- | Operational model (Display (19))
   zetahatT :: Initial (SepSig sv sc) -> t (InitialV sv sc)
   zetahatT (Cont (Mrg (SigV v))) = return v
   zetahatT (Cont (Mrg (SigC c))) = (bs_chi @a @sv $ first (zetahatT @a) c) >>= xiT @a >>= zetahatT @a . join
@@ -65,11 +66,11 @@ class (Functor sv, Bifunctor sc, Monad t) => BSSOST a sv sc t where
   zetaT :: InitialC sv sc -> t (InitialV sv sc)
   zetaT = zetahatT @a . sigOp . SigC
 
--- | Deriving big-step specification from a separated HO-GSOS law with monad.
+-- | Deriving big-step specification from a separated HO-GSOS law with monad, Display (17)
 instance (Bifunctor sc, Functor sv, Monad t, SepHOGSOST sv sc d t) => BSSOST d sv sc t where
   xiT :: SepHOGSOST sv sc d t => sc (sv x) x -> t (Free (SepSig sv sc) x)
   xiT = fmap (>>= nabla) . rhoCVT . 
-        bimap (sigOp . SigV . fmap return &&& (return . mx_second @d join . rhoVT @_ @_ @_ @t . fmap return)) return
+        bimap (sigOp . SigV . fmap return &&& (mx_second @d join . rhoVT @_ @_ @_ @t . fmap return)) return
           where nabla = either id id
           
   bs_chi :: SepHOGSOST sv sc d t => sc (t x) y -> t (sc x y)

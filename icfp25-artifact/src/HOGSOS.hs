@@ -18,17 +18,15 @@ higher-order operational semantics, as discussed in the paper.
 module HOGSOS where
 
 import Data.Bifunctor ( Bifunctor(first) )
-import Control.Arrow ((&&&)) -- For arrows to a product object.
+import Control.Arrow ((&&&)) -- To form product morphisms.
 import Syntax 
-import Behaviour ( Beh(..), MixFunctor(mx_second) )
+import Behaviour
 
--- Definitions related to HO-GSOS laws:
-
--- HO-GSOS law.
+-- HO-GSOS law (Sec 2.3, Display (3))
 class (Bifunctor s, MixFunctor b) => HOGSOS s b where
   rho :: s (x, b x y) x -> b x (Free (Mrg s) (Either x y))
 
-  -- Operational model.
+  -- Operational model (Sec 2.3, Display (4))
   gamma :: Initial (Mrg s) -> b (Initial (Mrg s)) (Initial (Mrg s))
   gamma (Cont (Mrg t)) = mx_second (>>= nabla) $ rho $ first (id &&& gamma) t
     where nabla = either id id

@@ -20,17 +20,20 @@ module Syntax where
 
 import Data.Bifunctor (Bifunctor(bimap))
 import Data.Void (Void)
+
 import Control.Monad (ap)
 import Control.Arrow ((&&&))
 
 newtype Mrg s x = Mrg (s x x) -- Merge functor (To define Sigma from Sigma').
 
-data Free s x -- The free object on a functor s.
+-- The free object on a functor s, implementing F* from _Functors and algebras_ subsection of Sec. 2.2
+data Free s x 
   = Res x 
   | Cont (s (Free s x)) 
   deriving (Functor)
 
-type Initial s = Free s Void -- The least fixpoint of Sigma*, i.e., muSigma.
+-- Corresponds to 𝜇𝐹=F*0 in the paper
+type Initial s = Free s Void 
 
 sigOp :: s (Free (Mrg s) x) (Free (Mrg s) x) -> Free (Mrg s) x
 sigOp = Cont . Mrg -- Abbreviation for the frequently used composition of type constructors.

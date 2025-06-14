@@ -23,20 +23,24 @@ module Separable where
 
 import Data.Proxy (Proxy(Proxy))
 import Data.Bifunctor (Bifunctor(bimap, first, second))
+
 import Control.Arrow ((&&&))
 import Control.Monad (join)
+
 import Syntax 
-import Behaviour (MixFunctor(..), Beh (Eval, Red))
+import Behaviour (MixFunctor(..), Beh (Eval, Red), SepBehT, SepBeh, SepBehT(..), SepBeh(..))
 import HOGSOS (HOGSOS(..), gamma)
 
--- Separated syntax functor (the bifunctor Sigma').
+-- Separated syntax functor (the bifunctor Sigma', Def. 3.1).
 data SepSig' sv sc x y = SigV (sv y) | SigC (sc x y)
-type SepSig sv sc = Mrg (SepSig' sv sc) -- Separated syntax functor (Sigma).
 
--- muSigma_v in the paper.
+-- Separated syntax functor (Sigma, Sec. 2.3).
+type SepSig sv sc = Mrg (SepSig' sv sc) 
+
+-- muSigma_v in the paper, Def. 3.1
 type InitialV sv sc = sv (Initial (SepSig sv sc))
 
--- muSigma_c in the paper.
+-- muSigma_c in the paper, Def. 3.1
 type InitialC sv sc = sc (Initial (SepSig sv sc)) (Initial (SepSig sv sc))
 
 instance (Functor sv, Bifunctor sc, Functor (sc b)) => Functor (SepSig' sv sc b) where
@@ -50,25 +54,7 @@ instance (Functor sv, Bifunctor sc) => Bifunctor (SepSig' sv sc) where
   bimap f g (SigV t) = SigV $ fmap g t
   bimap f g (SigC t) = SigC $ bimap f g t
 
--- Effectless "separated" behaviour functor.
-data SepBeh d x y = BehV (d x y) | BehC y
-
--- (Effectful) "separated" behaviour functor.
-data SepBehT t d x y = BehVT (t (d x y)) | BehCT (t y)
-
--- Instantiating separated effectless behaviour type constructor as a mixed-variance functor.
-instance (MixFunctor d) => MixFunctor (SepBeh d) where
-  mvmap :: (a -> b) -> (c -> e) -> SepBeh d b c -> SepBeh d a e
-  mvmap f g (BehV u) = BehV $ mvmap f g u
-  mvmap f g (BehC u) = BehC $ g u
-
--- Instantiating separated effectful behaviour type constructor as a mixed-variance functor.
-instance (Functor t, MixFunctor d) => MixFunctor (SepBehT t d) where
-  mvmap :: (a -> b) -> (c -> e) -> SepBehT t d b c -> SepBehT t d a e
-  mvmap f g (BehVT u) = BehVT $ fmap (mvmap f g) u
-  mvmap f g (BehCT u) = BehCT $ fmap g u
-
--- Separable HO-GSOS: effectless version
+-- Separable HO-GSOS: effectless version (Sec 2.1., didactic purpose only)
 class (MixFunctor d, Functor sv, Bifunctor sc) => SepHOGSOS sv sc d where
   rhoV :: sv x -> d x (Free (SepSig sv sc) x)
   rhoC :: sc (x, SepBeh d x y) x -> Free (SepSig sv sc) (Either x y)
@@ -85,44 +71,45 @@ class (MixFunctor d, Functor sv, Bifunctor sc) => SepHOGSOS sv sc d where
   gammaC (p :: Proxy d) t = (rhoC @_ @_ @d $ first (id &&& gamma') t) >>= nabla
     where nabla = either id id; gamma' (Cont (Mrg (SigV v))) = BehV $ gammaV v; gamma' (Cont (Mrg (SigC c))) = BehC $ gammaC p c 
 
-  -- Multi-step transition for rhoC.
+  -- Multi-step transition for rhoC 
   beta :: (Functor sv, Bifunctor sc, MixFunctor d, SepHOGSOS sv sc d)
     => Proxy d -> InitialC sv sc -> InitialV sv sc
   beta (p :: Proxy d) t = case gammaC p t of
     Cont (Mrg (SigV t)) -> t
     Cont (Mrg (SigC t)) -> beta p t
 
-  -- Multi-step transition for rhoC (variant).
+  -- Multi-step transition for rhoC 
   betahat :: (Functor sv, Bifunctor sc, MixFunctor d, SepHOGSOS sv sc d)
     => Proxy d -> Initial (SepSig sv sc) -> InitialV sv sc
   betahat (p :: Proxy d) (Cont (Mrg (SigV v))) = v
   betahat (p :: Proxy d) (Cont (Mrg (SigC c))) = betahat p (gammaC p c)
 
--- Effectless Separated HO-GSOS as HO-GSOS.
+-- Effectless Separated HO-GSOS as HO-GSOS (Sec 2.1., didactic purpose only)
 instance (SepHOGSOS sv sc d) => HOGSOS (SepSig' sv sc) (SepBeh d) where
   rho :: SepSig' sv sc (x, SepBeh d x y) x -> SepBeh d x (Free (SepSig sv sc) (Either x y))
   rho (SigV v) = BehV $ mvmap id (fmap Left) (rhoV v)
   rho (SigC c) = BehC $ rhoC c
 
--- Separable HO-GSOS: effectful version.
+-- Separable HO-GSOS: effectful version (Def. 3.1)
 class (Functor sv, Bifunctor sc, MixFunctor d, Monad t) => SepHOGSOST sv sc d t where
   rhoVT :: sv x -> d x (Free (SepSig sv sc) x)
   rhoCT :: sc (x, SepBehT t d x y) x -> t (Free (SepSig sv sc) (Either x y))
   chi :: sc (t x) y -> t (sc x y)
 
-  rhoCVT :: sc (x, t (d x y)) x -> t (Free (SepSig sv sc) (Either x y))
+  -- Display (13)
+  rhoCVT :: sc (x, d x y) x -> t (Free (SepSig sv sc) (Either x y))
   rhoCVT = rhoCT . first (second BehVT)
 
-  -- Operational model for rhoVT
+  -- Operational model for rhoVT (Display (10))
   gammaVT :: InitialV sv sc -> d (Initial (SepSig sv sc)) (Initial (SepSig sv sc))
   gammaVT = mvmap id join . rhoVT @_ @_ @d @t
 
-  -- Operational model for rhoCT
+  -- Operational model for rhoCT (Display (11))
   gammaCT :: Proxy d -> InitialC sv sc -> t (Initial (SepSig sv sc))
   gammaCT (p :: Proxy d) = fmap (>>= nabla) . rhoCT @_ @_ @d . first (id &&& gamma)
     where nabla = either id id
 
-  -- Multi-step transition for rhoC.
+  -- Multi-step transition for rhoC (Display (20))
   betaT :: Proxy d -> InitialC sv sc -> t (InitialV sv sc)
   betaT (p :: Proxy d) t = gammaCT p t >>= \t -> case t of
     Cont (Mrg (SigV t)) -> return t
@@ -132,8 +119,8 @@ class (Functor sv, Bifunctor sc, MixFunctor d, Monad t) => SepHOGSOST sv sc d t 
   betahatT (p :: Proxy d) (Cont (Mrg (SigV v))) = return v
   betahatT (p :: Proxy d) (Cont (Mrg (SigC c))) = betaT p c
 
--- Effectful Separated HO-GSOS as HO-GSOS.
+-- Effectful Separated HO-GSOS as HO-GSOS (Display (6))
 instance (SepHOGSOST sv sc d t) => HOGSOS (SepSig' sv sc) (SepBehT t d) where
   rho :: SepSig' sv sc (x, SepBehT t d x y) x -> SepBehT t d x (Free (SepSig sv sc) (Either x y))
-  rho (SigV v) = BehVT $ return $ mx_second (fmap Left) (rhoVT @_ @_ @d @t v)
+  rho (SigV v) = BehVT $ mx_second (fmap Left) (rhoVT @_ @_ @d @t v)
   rho (SigC c) = BehCT $ rhoCT c

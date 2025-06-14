@@ -9,12 +9,12 @@ This artifact accompanies the ICFP 2025 paper "Big Steps in Higher-Order Mathema
 The files inside the ``src`` folder are subject to the following dependencies:
 
 ```                                             
-┌───────────┐    ┌──────────────┐    ┌───────────┐    ┌──────────────┐    ┌────────────┐    ┌─────────────┐    ┌───────────────┐
-│ Syntax.hs │───►│ Behaviour.hs │───►│ HOGSOS.hs │───►│ Separable.hs │───►│ BigStep.hs │───►│ Examples.hs │───►│ Benchmarks.hs │
-└───────────┘    └──────────────┘    └───────────┘    └──────────────┘    └────────────┘    └─────────────┘    └───────────────┘
-                                                                                               ┌──────────┐            ▲       
-                                                                                               │ Utils.hs │────────────┘       
-                                                                                               └──────────┘                      
+┌───────────┐    ┌───────────┐    ┌──────────────┐    ┌────────────┐   ┌─────────────┐    ┌───────────────┐
+│ Syntax.hs │───►│ HOGSOS.hs │───►│ Separable.hs │───►│ BigStep.hs │──►│ Examples.hs │───►│ Benchmarks.hs │
+└───────────┘    └───────────┘    └──────────────┘    └────────────┘   └─────────────┘    └───────────────┘ 
+┌──────────────┐       ▲                                                  ┌──────────┐            ▲  
+│ Behaviour.hs │───────┘                                                  │ Utils.hs │────────────┘
+└──────────────┘                                                          └──────────┘
 ```
 
 ## Source File Contents
@@ -25,7 +25,8 @@ The files inside the ``src`` folder are subject to the following dependencies:
 - ``HOGSOS.hs``: Implements HoGSOS laws in the standard sense, and instantiates xCL as a HoGSOS law.
 - ``Separable.hs``: Implements separable HoGSOS laws (equipped with multi-step transitions) and instantiates non-deterministic xCL as a separated HoGSOS law.
 - ``BigStep.hs``: Implements abstract big-step SOS along with its operational model.
-- ``Examples.hs``: Implements the omega-f-g language from the introduction of the paper, along with three versions of call-by-value xCL.
+- ``Examples.hs``: Implements the omega-f-g language from the introduction of the paper, along with xCL and those its versions from the "Case Studies" Section (Sec. 6)
+that live in the category of sets.
 - ``Benchmark.hs``: Contains tests and instructions to run them, showing the results of the small-step (presented by multi-step transition) and big-step specifications.
 - ``Utils.hs``: Defines an auxiliary function to help with the presentation.
 

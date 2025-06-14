@@ -1,16 +1,16 @@
-
 {-|
+
 Module      : Benchmarks
-Description : Benchmarks and test runners for testing examples from ``Examples.hs``
+Description : Benchmarks for testing examples from ``Examples.hs``
 
 This module defines benchmark terms and test functions for evaluating:
 
 - Multi-step semantics (`beta`)
 - Big-step semantics (`zeta`)
-- Agreement between the two semantics
+- Agreement between the two semantics (Thm 5.4)
 
 It includes test suites for various languages (e.g., Art, NDxCL, CBVxCL variants),
-and uses `compareLists` from `Utils` to report semantic agreement.
+and uses `equalityTests` from `Utils` to report semantic agreement.
 
 Each language has:
 - A list of sample terms
@@ -26,12 +26,33 @@ module Benchmarks where
 
 import Data.Proxy ( Proxy(Proxy) )
 import Data.Bifunctor ( Bifunctor(bimap, first, second) )
-import Control.Monad (join, (<=<))
-import Control.Arrow ((&&&))
+
 import Syntax 
 import Separable 
 import Examples
 import Utils
+
+-------------------------------------------------------------------------------
+-- SECTION 1: xCL (Extended Combinatory Logic)
+-------------------------------------------------------------------------------
+
+benchmarkxCL :: [Initial (SepSig XCLV XCLC)]
+benchmarkxCL = [
+  sigOp $ SigV Kv 
+  , sigOp $ SigV $ S''v (sigOp $ SigV Kv) (sigOp $ SigV Iv) 
+  , sigOp $ SigC $ Compc (sigOp $ SigV $ S''v (sigOp $ SigV Kv) (sigOp $ SigV Iv)) (sigOp $ SigC $ Compc (sigOp $ SigV Sv) (sigOp $ SigV Iv)) 
+  ]
+
+testxCLBeta :: [InitialV XCLV XCLC]
+testxCLBeta = fmap tryEvalBxCL benchmarkxCL
+
+testxCLZeta :: [InitialV XCLV XCLC]
+testxCLZeta = fmap tryEvalZxCL benchmarkxCL
+
+testxCLZetaAgreement :: IO ()
+testxCLZetaAgreement = do
+  putStrLn $ "Example terms: " ++ show benchmarkxCL
+  equalityTests testxCLBeta testxCLZeta (fmap (const True) benchmarkxCL)
 
 -------------------------------------------------------------------------------
 -- SECTION 2: ArtV/ArtC Example Language
@@ -53,45 +74,11 @@ testArtZeta = fmap tryEvalZArt benchmarkArt
 testArtZetaAgreement :: IO ()
 testArtZetaAgreement = do
   putStrLn $ "Example terms: " ++ show benchmarkArt
-  compareLists testArtBeta testArtZeta
+  equalityTests testArtBeta testArtZeta [False, False, True]
 
 -------------------------------------------------------------------------------
--- SECTION 1: xCL (Extended Combinatory Logic)
+-- SECTION 3: Non-deterministic xCL 
 -------------------------------------------------------------------------------
-
-benchmarkxCL :: [(Initial XCL, Initial XCL)]
-benchmarkxCL = [
-  (sigOp K , sigOp I)
-  , (sigOp $ S'' (sigOp K) (sigOp I) , sigOp S)
-  , (sigOp $ Comp (sigOp $ S'' (sigOp K) (sigOp I)) (sigOp $ Comp (sigOp S) (sigOp I)) , sigOp I)
-  ]
-
-testxCLGamma :: [Either (Initial XCL) (Initial XCL)]
-testxCLGamma = fmap (uncurry tryEval) benchmarkxCL
-
-------------------------------------------------------------------------------
--- Testing operational models, multi-step transitions, and the big-step model non-deterministic xCL:
--- For this case we have different functions. So we define two separate benchmark lists.
--- For gammaV we need pairs as inputs, while for gammaC we don't need pairs.
--- Type: InitialV NDxCLV NDxCLC -> Initial (SepSig NDxCLV NDxCLC) -> [Initial (SepSig NDxCLV NDxCLC)]
-benchmarkVnxCL :: [(InitialV NDxCLV NDxCLC, Initial (SepSig NDxCLV NDxCLC))]
-benchmarkVnxCL = [
-  (NS' $ sigOp $ SigV NK , sigOp $ SigV NS) 
-  , (NS'' (sigOp $ SigV NK) (sigOp $ SigV NI)  , sigOp $ SigV NS) 
-  ]
-
-testnxCLGammaV :: [Initial (SepSig NDxCLV NDxCLC)]
-testnxCLGammaV = fmap (uncurry tryEvalVT) benchmarkVnxCL
-
-benchmarkCnxCL :: [InitialC NDxCLV NDxCLC]
-benchmarkCnxCL = [
-  NComp (sigOp $ SigC $ NComp (sigOp $ SigV $ VPar (sigOp $ SigV NI) (sigOp $ SigV NS)) (sigOp $ SigC $ Par (sigOp $ SigV NK) (sigOp $ SigV NK) )) (sigOp $ SigV NK)
-  , NComp (sigOp $ SigC $ NComp (sigOp $ SigV $ VPar (sigOp $ SigV NI) (sigOp $ SigV NS)) (sigOp $ SigC $ Par (sigOp $ SigV NK) (sigOp $ SigV NK) )) (sigOp $ SigV NK)
-  , NComp (sigOp $ SigC $ NComp (sigOp $ SigV $ VPar (sigOp $ SigV NI) (sigOp $ SigV NS)) (sigOp $ SigC $ Par (sigOp $ SigV NK) (sigOp $ SigV NK) )) (sigOp $ SigV NK)
-  ]
-
-testnxCLGammaC :: [[Initial (SepSig NDxCLV NDxCLC)]]
-testnxCLGammaC = fmap tryEvalCT benchmarkCnxCL
 
 benchmarknxCL :: [Initial (SepSig NDxCLV NDxCLC)]
 benchmarknxCL = [
@@ -115,16 +102,10 @@ testnxCLZeta = fmap tryEvalZT benchmarknxCL
 testnxCLZetaAgreement :: IO ()
 testnxCLZetaAgreement = do
   putStrLn $ "Example terms: " ++ show benchmarknxCL
-  compareLists testnxCLBeta testnxCLZeta
+  equalityTests testnxCLBeta testnxCLZeta (fmap (const True) benchmarknxCL)
 
 -------------------------------------------------------------------------------
--- SECTION 4: xCL with Parallel Composition (VxCLParal, CxCLParal)
--------------------------------------------------------------------------------
-
--- (No benchmarks provided for this section in the original file.)
-
--------------------------------------------------------------------------------
--- SECTION 5: Call-by-Value xCL (CBVxCLV1, CBVxCLC1)
+-- SECTION 4: Call-by-Value xCL (CBVxCLV1, CBVxCLC1)
 -------------------------------------------------------------------------------
 
 benchmarkCBV1 :: [InitialC CBVxCLV1 CBVxCLC1]
@@ -143,10 +124,10 @@ testCBV1Zeta = fmap tryEvalZCBW benchmarkCBV1
 testCBV1ZetaAgreement :: IO ()
 testCBV1ZetaAgreement = do
   putStrLn $ "Example terms: " ++ show benchmarkCBV1
-  compareLists testCBV1Beta testCBV1Zeta
+  equalityTests testCBV1Beta testCBV1Zeta (fmap (const True) benchmarkCBV1)
 
 -------------------------------------------------------------------------------
--- SECTION 6: Call-by-Value xCL (CBVxCLV2, CBVxCLC2)
+-- SECTION 5: Call-by-Value xCL (CBVxCLV2, CBVxCLC2)
 -------------------------------------------------------------------------------
 
 benchmarkCBV2 :: [InitialC CBVxCLV2 CBVxCLC2]
@@ -165,10 +146,10 @@ testCBV2Zeta = fmap tryEvalZCBU benchmarkCBV2
 testCBV2ZetaAgreement :: IO ()
 testCBV2ZetaAgreement = do
   putStrLn $ "Example terms: " ++ show benchmarkCBV2
-  compareLists testCBV2Beta testCBV2Zeta
+  equalityTests testCBV2Beta testCBV2Zeta (fmap (const True) benchmarkCBV2)
 
 -------------------------------------------------------------------------------
--- SECTION 7: Call-by-Value xCL (CBVxCLV3, CBVxCLC3)
+-- SECTION 6: Call-by-Value xCL (CBVxCLV3, CBVxCLC3)
 -------------------------------------------------------------------------------
 
 benchmarkCBV3 :: [InitialC CBVxCLV3 CBVxCLC3]
@@ -187,7 +168,7 @@ testCBV3Zeta = fmap tryEvalZCBV benchmarkCBV3
 testCBV3ZetaAgreement :: IO ()
 testCBV3ZetaAgreement = do
   putStrLn $ "Example terms: " ++ show benchmarkCBV3
-  compareLists testCBV3Beta testCBV3Zeta
+  equalityTests testCBV3Beta testCBV3Zeta (fmap (const True) benchmarkCBV3)
 
 -------------------------------------------------------------------------------
 -- Run all benchmarks
@@ -195,23 +176,28 @@ testCBV3ZetaAgreement = do
 
 runAllBenchmarks :: IO ()
 runAllBenchmarks = do
-  putStrLn "=== Running Benchmarks for Art ==="
+
+  putStrLn "=== Running Benchmarks for xCL ===\n"
+  testxCLZetaAgreement
+  putStrLn ""
+
+  putStrLn "=== Running Benchmarks for Art ===\n"
   testArtZetaAgreement
   putStrLn ""
 
-  putStrLn "=== Running Benchmarks for NDxCL ==="
+  putStrLn "=== Running Benchmarks for NDxCL ===\n"
   testnxCLZetaAgreement
   putStrLn ""
 
-  putStrLn "=== Running Benchmarks for CBV1 ==="
+  putStrLn "=== Running Benchmarks for CBV1 ===\n"
   testCBV1ZetaAgreement
   putStrLn ""
 
-  putStrLn "=== Running Benchmarks for CBV2 ==="
+  putStrLn "=== Running Benchmarks for CBV2 ===\n"
   testCBV2ZetaAgreement
   putStrLn ""
 
-  putStrLn "=== Running Benchmarks for CBV3 ==="
+  putStrLn "=== Running Benchmarks for CBV3 ===\n"
   testCBV3ZetaAgreement
   putStrLn ""
 
