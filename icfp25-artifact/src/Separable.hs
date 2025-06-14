@@ -69,7 +69,10 @@ class (MixFunctor d, Functor sv, Bifunctor sc) => SepHOGSOS sv sc d where
   -- Operational model for rhoC
   gammaC :: Proxy d -> InitialC sv sc -> Initial (SepSig sv sc)
   gammaC (p :: Proxy d) t = (rhoC @_ @_ @d $ first (id &&& gamma') t) >>= nabla
-    where nabla = either id id; gamma' (Cont (Mrg (SigV v))) = BehV $ gammaV v; gamma' (Cont (Mrg (SigC c))) = BehC $ gammaC p c 
+    where 
+      nabla = either id id
+      gamma' (Cont (Mrg (SigV v))) = BehV $ gammaV v
+      gamma' (Cont (Mrg (SigC c))) = BehC $ gammaC p c 
 
   -- Multi-step transition for rhoC 
   beta :: (Functor sv, Bifunctor sc, MixFunctor d, SepHOGSOS sv sc d)

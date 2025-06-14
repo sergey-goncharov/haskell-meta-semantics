@@ -32,7 +32,75 @@ import Separable
 import BigStep 
 
 -------------------------------------------------------------------------------
--- SECTION 1: xCL (Extended Combinatory Logic)
+-- SECTION 1: ArtV/ArtC Example Language (Exp. 2.1)
+-------------------------------------------------------------------------------
+
+newtype ArtV x = G x 
+  deriving (Functor)
+
+data ArtC x y = F x | Omega
+
+instance Functor (ArtC a) where
+  fmap :: (b -> c) -> ArtC a b -> ArtC a c
+  fmap f (F x) = F x
+  fmap _ Omega = Omega
+
+instance Bifunctor ArtC where
+  bimap :: (a -> b) -> (c -> d) -> ArtC a c -> ArtC b d
+  bimap f _ (F x) = F (f x)
+  bimap _ _ Omega = Omega
+
+instance SepHOGSOS ArtV ArtC (->) where
+  rhoV :: ArtV x -> x -> Free (SepSig ArtV ArtC) x
+  rhoV (G x) = sigOp . SigC . F . Res
+
+  rhoC :: ArtC (x, SepBeh (->) x y) x -> Free (SepSig ArtV ArtC) (Either x y)
+  rhoC (F (x , BehC y)) = sigOp $ SigV $ G $ Res $ Right y
+  rhoC (F (x , _)) = Res $ Left x
+  rhoC Omega = sigOp $ SigC Omega
+
+instance Show (Initial (SepSig ArtV ArtC)) where
+  show :: Initial (SepSig ArtV ArtC) -> String
+  show (Cont (Mrg (SigC (F x)))) = "f(" ++ show x ++ ")"
+  show (Cont (Mrg (SigC Omega))) = "Ω"
+  show (Cont (Mrg (SigV (G x)))) = "g(" ++ show x ++ ")"
+
+instance Eq (Initial (SepSig ArtV ArtC)) where
+  (==) :: Initial (SepSig ArtV ArtC) -> Initial (SepSig ArtV ArtC) -> Bool
+  Cont (Mrg (SigC (F x))) == Cont (Mrg (SigC (F y))) = x == y
+  Cont (Mrg (SigC Omega)) == Cont (Mrg (SigC Omega)) = True
+  Cont (Mrg (SigV (G x))) == Cont (Mrg (SigV (G y))) = x == y
+  _ == _ = False
+
+instance Show (InitialV ArtV ArtC) where
+  show :: InitialV ArtV ArtC -> String
+  show (G x) = "g(" ++ show x ++ ")"
+
+instance Eq (InitialV ArtV ArtC) where
+  (==) :: InitialV ArtV ArtC -> InitialV ArtV ArtC -> Bool
+  (G x) == (G y) = x == y
+
+instance Show (InitialC ArtV ArtC) where
+  show :: InitialC ArtV ArtC -> String
+  show (F x) = "f(" ++ show x ++ ")"
+  show Omega = "omega"
+
+instance Eq (InitialC ArtV ArtC) where
+  (==) :: InitialC ArtV ArtC -> InitialC ArtV ArtC -> Bool
+  F x == F y = x == y
+  Omega == Omega = True
+  _ == _ = False
+
+-- Test function for ArtV/ArtC
+
+tryEvalBArt :: InitialC ArtV ArtC -> InitialV ArtV ArtC
+tryEvalBArt = beta @ArtV @ArtC @(->) Proxy 
+
+tryEvalZArt :: InitialC ArtV ArtC -> InitialV ArtV ArtC
+tryEvalZArt = zeta @(->) @ArtV @ArtC 
+
+-------------------------------------------------------------------------------
+-- SECTION 2: xCL (Extended Combinatory Logic)
 -------------------------------------------------------------------------------
 
 -- | Syntax for xCL (Display (1)).
@@ -115,7 +183,7 @@ instance Show (Initial XCL) where
   show (Cont (Mrg K)) = "K"
   show (Cont (Mrg (K' t))) = "(K'" ++ show t ++ ")"
   show (Cont (Mrg I)) = "I"
-  show (Cont (Mrg (Comp t s))) = "(" ++ show t ++ " * " ++ show s ++ ")"
+  show (Cont (Mrg (Comp t s))) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
   
 -- SepHOGSOS instance for xCL (Exp. 3.3)
 instance SepHOGSOS XCLV XCLC (->) where
@@ -140,7 +208,7 @@ instance Show (Initial (SepSig XCLV XCLC)) where
   show (Cont (Mrg (SigV Kv))) = "K"
   show (Cont (Mrg ((SigV (K'v t))))) = "K'(" ++ show t ++ ")"
   show (Cont (Mrg (SigV Iv))) = "I"
-  show (Cont (Mrg (SigC (Compc t s)))) = "(" ++ show t ++ " * " ++ show s ++ ")"
+  show (Cont (Mrg (SigC (Compc t s)))) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
 
 instance Eq (Initial (SepSig XCLV XCLC)) where
   (==) :: Initial (SepSig XCLV XCLC) -> Initial (SepSig XCLV XCLC) -> Bool
@@ -172,7 +240,7 @@ instance Eq (InitialV XCLV XCLC) where
   _ == _ = False
 
 instance Show (InitialC XCLV XCLC) where
-  show (Compc t s) = "(" ++ show t ++ " * " ++ show s ++ ")"
+  show (Compc t s) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
 
 instance Eq (InitialC XCLV XCLC) where
   Compc t s == Compc t' s' = (t == t') && (s==s')
@@ -189,74 +257,6 @@ tryEvalBxCL = betahat @XCLV @XCLC @(->) Proxy
 
 tryEvalZxCL :: Initial (SepSig XCLV XCLC) -> InitialV XCLV XCLC
 tryEvalZxCL = zetahat @(->) @XCLV @XCLC 
-
--------------------------------------------------------------------------------
--- SECTION 2: ArtV/ArtC Example Language (Exp. 2.1)
--------------------------------------------------------------------------------
-
-newtype ArtV x = G x 
-  deriving (Functor)
-
-data ArtC x y = F x | Omega
-
-instance Functor (ArtC a) where
-  fmap :: (b -> c) -> ArtC a b -> ArtC a c
-  fmap f (F x) = F x
-  fmap _ Omega = Omega
-
-instance Bifunctor ArtC where
-  bimap :: (a -> b) -> (c -> d) -> ArtC a c -> ArtC b d
-  bimap f _ (F x) = F (f x)
-  bimap _ _ Omega = Omega
-
-instance SepHOGSOS ArtV ArtC (->) where
-  rhoV :: ArtV x -> x -> Free (SepSig ArtV ArtC) x
-  rhoV (G x) = sigOp . SigC . F . Res
-
-  rhoC :: ArtC (x, SepBeh (->) x y) x -> Free (SepSig ArtV ArtC) (Either x y)
-  rhoC (F (x , BehC y)) = sigOp $ SigV $ G $ Res $ Right y
-  rhoC (F (x , _)) = Res $ Left x
-  rhoC Omega = sigOp $ SigC Omega
-
-instance Show (Initial (SepSig ArtV ArtC)) where
-  show :: Initial (SepSig ArtV ArtC) -> String
-  show (Cont (Mrg (SigC (F x)))) = "f(" ++ show x ++ ")"
-  show (Cont (Mrg (SigC Omega))) = "omega"
-  show (Cont (Mrg (SigV (G x)))) = "g(" ++ show x ++ ")"
-
-instance Eq (Initial (SepSig ArtV ArtC)) where
-  (==) :: Initial (SepSig ArtV ArtC) -> Initial (SepSig ArtV ArtC) -> Bool
-  Cont (Mrg (SigC (F x))) == Cont (Mrg (SigC (F y))) = x == y
-  Cont (Mrg (SigC Omega)) == Cont (Mrg (SigC Omega)) = True
-  Cont (Mrg (SigV (G x))) == Cont (Mrg (SigV (G y))) = x == y
-  _ == _ = False
-
-instance Show (InitialV ArtV ArtC) where
-  show :: InitialV ArtV ArtC -> String
-  show (G x) = "g(" ++ show x ++ ")"
-
-instance Eq (InitialV ArtV ArtC) where
-  (==) :: InitialV ArtV ArtC -> InitialV ArtV ArtC -> Bool
-  (G x) == (G y) = x == y
-
-instance Show (InitialC ArtV ArtC) where
-  show :: InitialC ArtV ArtC -> String
-  show (F x) = "f(" ++ show x ++ ")"
-  show Omega = "omega"
-
-instance Eq (InitialC ArtV ArtC) where
-  (==) :: InitialC ArtV ArtC -> InitialC ArtV ArtC -> Bool
-  F x == F y = x == y
-  Omega == Omega = True
-  _ == _ = False
-
--- Test function for ArtV/ArtC
-
-tryEvalBArt :: InitialC ArtV ArtC -> InitialV ArtV ArtC
-tryEvalBArt = beta @ArtV @ArtC @(->) Proxy 
-
-tryEvalZArt :: InitialC ArtV ArtC -> InitialV ArtV ArtC
-tryEvalZArt = zeta @(->) @ArtV @ArtC 
 
 -------------------------------------------------------------------------------
 -- SECTION 3: Non-deterministic xCL (NDxCL), Sec. 6.3
@@ -336,8 +336,8 @@ instance Show (Initial (SepSig NDxCLV NDxCLC)) where
   show (Cont (Mrg (SigV NK))) = "K"
   show (Cont (Mrg ((SigV (NK' t))))) = "K'(" ++ show t ++ ")"
   show (Cont (Mrg (SigV NI))) = "I"
-  show (Cont (Mrg (SigV (VPar s t)))) = "(" ++ show s ++ " |-| " ++ show t ++ ")"
-  show (Cont (Mrg (SigC (NComp t s)))) = "(" ++ show t ++ " * " ++ show s ++ ")"
+  show (Cont (Mrg (SigV (VPar s t)))) = "(" ++ show s ++ " ⊔ " ++ show t ++ ")"
+  show (Cont (Mrg (SigC (NComp t s)))) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
   show (Cont (Mrg (SigC (DSum t s)))) = "(" ++ show t ++ " + " ++ show s ++ ")"
   show (Cont (Mrg (SigC (Par t s)))) = "(" ++ show t ++ " || " ++ show s ++ ")"
 
@@ -361,7 +361,7 @@ instance Show (InitialV NDxCLV NDxCLC) where
   show NK = "K"
   show (NK' t) = "K'(" ++ show t ++ ")"
   show NI = "I"
-  show (VPar s t) = "(" ++ show t ++ " |-| " ++ show s ++ ")"
+  show (VPar s t) = "(" ++ show t ++ " ⊔ " ++ show s ++ ")"
 
 instance Eq (InitialV NDxCLV NDxCLC) where
   (==) :: InitialV NDxCLV NDxCLC -> InitialV NDxCLV NDxCLC -> Bool
@@ -375,7 +375,7 @@ instance Eq (InitialV NDxCLV NDxCLC) where
   _ == _ = False
 
 instance Show (InitialC NDxCLV NDxCLC) where
-  show (NComp t s) = "(" ++ show t ++ " * " ++ show s ++ ")"
+  show (NComp t s) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
   show (DSum t s) = "(" ++ show t ++ " + " ++ show s ++ ")"
   show (Par t s) = "(" ++ show t ++ " || " ++ show s ++ ")"
 
@@ -428,7 +428,7 @@ instance Show (Initial (SepSig CBVxCLV1 CBVxCLC1)) where
   show (Cont (Mrg (SigV Kcbv1))) = "K"
   show (Cont (Mrg (SigV (Kcbv1' t)))) = "K'(" ++ show t ++ ")"
   show (Cont (Mrg (SigV Icbv1))) = "I"
-  show (Cont (Mrg (SigC (Compcbv1 t s)))) = "(" ++ show t ++ " . " ++ show s ++ ")"
+  show (Cont (Mrg (SigC (Compcbv1 t s)))) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
 
 instance Eq (Initial (SepSig CBVxCLV1 CBVxCLC1)) where
   (==) :: Initial (SepSig CBVxCLV1 CBVxCLC1) -> Initial (SepSig CBVxCLV1 CBVxCLC1) -> Bool
@@ -462,7 +462,7 @@ instance Eq (InitialV CBVxCLV1 CBVxCLC1) where
 
 instance Show (InitialC CBVxCLV1 CBVxCLC1) where
   show :: InitialC CBVxCLV1 CBVxCLC1 -> String
-  show (Compcbv1 t s) = "(" ++ show t ++ " . " ++ show s ++ ")"
+  show (Compcbv1 t s) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
 
 instance Eq (InitialC CBVxCLV1 CBVxCLC1) where
   (==) :: InitialC CBVxCLV1 CBVxCLC1 -> InitialC CBVxCLV1 CBVxCLC1 -> Bool
@@ -520,7 +520,7 @@ instance Show (Initial (SepSig CBVxCLV2 CBVxCLC2)) where
   show (Cont (Mrg (SigV Kcbv2))) = "K"
   show (Cont (Mrg (SigV (Kcbv2' t)))) = "K'(" ++ show t ++ ")"
   show (Cont (Mrg (SigV Icbv2))) = "I"
-  show (Cont (Mrg (SigC (Compcbv2 t s)))) = "(" ++ show t ++ " . " ++ show s ++ ")"
+  show (Cont (Mrg (SigC (Compcbv2 t s)))) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
 
 instance Eq (Initial (SepSig CBVxCLV2 CBVxCLC2)) where
   (==) :: Initial (SepSig CBVxCLV2 CBVxCLC2) -> Initial (SepSig CBVxCLV2 CBVxCLC2) -> Bool
@@ -554,7 +554,7 @@ instance Eq (InitialV CBVxCLV2 CBVxCLC2) where
 
 instance Show (InitialC CBVxCLV2 CBVxCLC2) where
   show :: InitialC CBVxCLV2 CBVxCLC2 -> String
-  show (Compcbv2 t s) = "(" ++ show t ++ "." ++ show s ++ ")"
+  show (Compcbv2 t s) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
 
 instance Eq (InitialC CBVxCLV2 CBVxCLC2) where
   (==) :: InitialC CBVxCLV2 CBVxCLC2 -> InitialC CBVxCLV2 CBVxCLC2 -> Bool
@@ -618,9 +618,9 @@ instance Show (Initial (SepSig CBVxCLV3 CBVxCLC3)) where
   show (Cont (Mrg (SigV Kcbv3))) = "K"
   show (Cont (Mrg ((SigV (Kcbv3' t))))) = "K'(" ++ show t ++ ")"
   show (Cont (Mrg (SigV Icbv3))) = "I"
-  show (Cont (Mrg (SigC (Compcbv3 t s)))) = "(" ++ show t ++ "." ++ show s ++ ")"
-  show (Cont (Mrg (SigC (TCompcbv3 t s)))) = "(" ++ show t ++ ".'" ++ show s ++ ")"
-  show (Cont (Mrg (SigC (RCompcbv3 t s)))) = "(" ++ show t ++ ".''" ++ show s ++ ")"
+  show (Cont (Mrg (SigC (Compcbv3 t s)))) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
+  show (Cont (Mrg (SigC (TCompcbv3 t s)))) = "(" ++ show t ++ " ⋅' " ++ show s ++ ")"
+  show (Cont (Mrg (SigC (RCompcbv3 t s)))) = "(" ++ show t ++ " ⋅'' " ++ show s ++ ")"
 
 instance Eq (Initial (SepSig CBVxCLV3 CBVxCLC3)) where
   (==) :: Initial (SepSig CBVxCLV3 CBVxCLC3) -> Initial (SepSig CBVxCLV3 CBVxCLC3) -> Bool
@@ -656,9 +656,9 @@ instance Eq (InitialV CBVxCLV3 CBVxCLC3) where
 
 instance Show (InitialC CBVxCLV3 CBVxCLC3) where
   show :: InitialC CBVxCLV3 CBVxCLC3 -> String
-  show (Compcbv3 t s)  = "(" ++ show t ++ "." ++ show s ++ ")"
-  show (TCompcbv3 t s) = "(" ++ show t ++ ".'" ++ show s ++ ")"
-  show (RCompcbv3 t s) = "(" ++ show t ++ ".''" ++ show s ++ ")"
+  show (Compcbv3 t s)  = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
+  show (TCompcbv3 t s) = "(" ++ show t ++ " ⋅' " ++ show s ++ ")"
+  show (RCompcbv3 t s) = "(" ++ show t ++ " ⋅'' " ++ show s ++ ")"
 
 instance Eq (InitialC CBVxCLV3 CBVxCLC3) where
   (==) :: InitialC CBVxCLV3 CBVxCLC3 -> InitialC CBVxCLV3 CBVxCLC3 -> Bool

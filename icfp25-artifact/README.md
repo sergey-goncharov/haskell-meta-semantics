@@ -2,7 +2,11 @@
 
 ## Overview
 
-This artifact accompanies the ICFP 2025 paper "Big Steps in Higher-Order Mathematical Operational Semantics" and provides Haskell source files that implement the type classes for small-step and big-step semantics, construction, examples and benchmarks supporting the paper. 
+This artifact accompanies the ICFP 2025 paper "Big Steps in Higher-Order Mathematical Operational Semantics" and provides Haskell source files that implement the type classes for small-step and big-step semantics, related constructions, examples and benchmarks supporting the paper.
+
+Links to the paper material are provided in comments via "Thm. <number>", "Sec. <number>", "Display (<number>)", etc.
+
+The implementation only contains constructions, but not proofs (as Haskell does not support them). It covers only those examples, that are mentioned in the paper as examples in the category of sets. Thus, e.g. Sec. 6.2 (Recursion and Conditionals) and Sec. 7.3 (lambda-calculus) are not covered, as those involve categories of many-sorted sets and presheaves correspondingly.
 
 ## Artifact Structure
 
@@ -17,16 +21,17 @@ The files inside the ``src`` folder are subject to the following dependencies:
 └──────────────┘                                                          └──────────┘
 ```
 
+The main function is ``runAllBenchmarks`` in Benchmarks.hs. It tests the main result of the paper Thm. 5.4 on example cases from the paper, including Exp. 2.1, for which it fails, because the strong separability condition is not satisfied. ``Main.hs`` is used a wrapper for `runAllBenchmarks``, for compatibility with cabal.
+
 ## Source File Contents
 
-
-- ``Syntax.hs``: Contains the abstract notions needed about the syntax of a language (standard and separated), along with the syntax of xCL and non-deterministic xCL.
-- ``Behaviour.hs``: Implements the behaviour functor in general (standard and separated), and for the cases of deterministic and non-deterministic behaviour.
-- ``HOGSOS.hs``: Implements HoGSOS laws in the standard sense, and instantiates xCL as a HoGSOS law.
-- ``Separable.hs``: Implements separable HoGSOS laws (equipped with multi-step transitions) and instantiates non-deterministic xCL as a separated HoGSOS law.
-- ``BigStep.hs``: Implements abstract big-step SOS along with its operational model.
-- ``Examples.hs``: Implements the omega-f-g language from the introduction of the paper, along with xCL and those its versions from the "Case Studies" Section (Sec. 6)
-that live in the category of sets.
+- ``Syntax.hs``: Contains the abstract notion of syntax of a language via functors and monads
+- ``Behaviour.hs``: Contains the abstract notion of behaviour and auxiliary definitions
+- ``HOGSOS.hs``: Implements HO-GSOS as a type class
+- ``Separable.hs``: Implements separable HO-GSOS laws, multi-step transitions and instantiates HO-GSOS as separated HO-GSOS 
+- ``BigStep.hs``: Implements abstract big-step SOS, its operational model, and the translation from small-step (separated HO-GSOS) to big-step
+- ``Examples.hs``: Implements the omega-f-g language from the introduction of the paper, together with xCL and those its versions from 
+the "Case Studies" Section (Sec. 6) that live in the category of sets.
 - ``Benchmark.hs``: Contains tests and instructions to run them, showing the results of the small-step (presented by multi-step transition) and big-step specifications.
 - ``Utils.hs``: Defines an auxiliary function to help with the presentation.
 
@@ -37,7 +42,7 @@ To build and run the artifact, you will need:
 - **GHC   ≥ 9.4**
 - **Cabal ≥ 3.0**
 - No external libraries beyond the standard `base` package (version ≥ 4.12 and < 5)
-A
+
 All modules are written in **Haskell2010** and use common language extensions such as `TypeApplications`, `FlexibleInstances`, and `ScopedTypeVariables`.
 
 ## Building the Artifact

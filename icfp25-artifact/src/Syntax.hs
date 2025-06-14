@@ -36,7 +36,7 @@ data Free s x
 type Initial s = Free s Void 
 
 sigOp :: s (Free (Mrg s) x) (Free (Mrg s) x) -> Free (Mrg s) x
-sigOp = Cont . Mrg -- Abbreviation for the frequently used composition of type constructors.
+sigOp = Cont . Mrg 
 
 instance Functor s => Applicative (Free s) where
   pure :: Functor s => a -> Free s a
