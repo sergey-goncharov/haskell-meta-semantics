@@ -14,7 +14,7 @@ It includes:
 through instance declarations.
 
 This module provides a definition of big-step semantics as a type class and 
-and a translation from small-step to big-step semantics through an instance declaration.
+and a translation from small-step to big-step through an instance declaration.
 
 -}
 

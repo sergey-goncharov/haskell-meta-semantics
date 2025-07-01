@@ -33,29 +33,7 @@ import Examples
 import Utils
 
 -------------------------------------------------------------------------------
--- SECTION 1: xCL (Extended Combinatory Logic)
--------------------------------------------------------------------------------
-
-benchmarkxCL :: [Initial (SepSig XCLV XCLC)]
-benchmarkxCL = [
-  sigOp $ SigV Kv 
-  , sigOp $ SigV $ S''v (sigOp $ SigV Kv) (sigOp $ SigV Iv) 
-  , sigOp $ SigC $ Compc (sigOp $ SigV $ S''v (sigOp $ SigV Kv) (sigOp $ SigV Iv)) (sigOp $ SigC $ Compc (sigOp $ SigV Sv) (sigOp $ SigV Iv)) 
-  ]
-
-testxCLBeta :: [InitialV XCLV XCLC]
-testxCLBeta = fmap tryEvalBxCL benchmarkxCL
-
-testxCLZeta :: [InitialV XCLV XCLC]
-testxCLZeta = fmap tryEvalZxCL benchmarkxCL
-
-testxCLZetaAgreement :: IO ()
-testxCLZetaAgreement = do
-  putStrLn $ "Example terms: " ++ show benchmarkxCL
-  equalityTests testxCLBeta testxCLZeta (fmap (const True) benchmarkxCL)
-
--------------------------------------------------------------------------------
--- SECTION 2: ArtV/ArtC Example Language
+-- SECTION 1: ArtV/ArtC Example Language
 -------------------------------------------------------------------------------
 
 benchmarkArt :: [InitialC ArtV ArtC]
@@ -75,6 +53,28 @@ testArtZetaAgreement :: IO ()
 testArtZetaAgreement = do
   putStrLn $ "Example terms: " ++ show benchmarkArt
   equalityTests testArtBeta testArtZeta [False, False, True]
+
+-------------------------------------------------------------------------------
+-- SECTION 2: xCL (Extended Combinatory Logic)
+-------------------------------------------------------------------------------
+
+benchmarkxCL :: [Initial (SepSig XCLV XCLC)]
+benchmarkxCL = [
+  sigOp $ SigV Kv 
+  , sigOp $ SigV $ S''v (sigOp $ SigV Kv) (sigOp $ SigV Iv) 
+  , sigOp $ SigC $ Compc (sigOp $ SigV $ S''v (sigOp $ SigV Kv) (sigOp $ SigV Iv)) (sigOp $ SigC $ Compc (sigOp $ SigV Sv) (sigOp $ SigV Iv)) 
+  ]
+
+testxCLBeta :: [InitialV XCLV XCLC]
+testxCLBeta = fmap tryEvalBxCL benchmarkxCL
+
+testxCLZeta :: [InitialV XCLV XCLC]
+testxCLZeta = fmap tryEvalZxCL benchmarkxCL
+
+testxCLZetaAgreement :: IO ()
+testxCLZetaAgreement = do
+  putStrLn $ "Example terms: " ++ show benchmarkxCL
+  equalityTests testxCLBeta testxCLZeta (fmap (const True) benchmarkxCL)
 
 -------------------------------------------------------------------------------
 -- SECTION 3: Non-deterministic xCL 
@@ -177,12 +177,12 @@ testCBV3ZetaAgreement = do
 runAllBenchmarks :: IO ()
 runAllBenchmarks = do
 
-  putStrLn "=== Running Benchmarks for xCL ===\n"
-  testxCLZetaAgreement
-  putStrLn ""
-
   putStrLn "=== Running Benchmarks for Art ===\n"
   testArtZetaAgreement
+  putStrLn ""
+
+  putStrLn "=== Running Benchmarks for xCL ===\n"
+  testxCLZetaAgreement
   putStrLn ""
 
   putStrLn "=== Running Benchmarks for NDxCL ===\n"
@@ -201,3 +201,5 @@ runAllBenchmarks = do
   testCBV3ZetaAgreement
   putStrLn ""
 
+main :: IO ()
+main = runAllBenchmarks
