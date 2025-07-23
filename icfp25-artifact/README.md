@@ -2,7 +2,7 @@
 
 ## Overview
 
-This artifact accompanies the ICFP 2025 paper "Big Steps in Higher-Order Mathematical Operational Semantics" and provides Haskell source files that implement the type classes for small-step and big-step semantics, related constructions, examples and benchmarks supporting the paper.
+This artifact accompanies the ICFP 2025 paper "Big Steps in Higher-Order Mathematical Operational Semantics" and provides Haskell source files that implement the type classes for small-step and big-step semantics, related constructions, examples and tests supporting the paper.
 
 Links to the paper material are provided in comments via "Thm. <number>", "Sec. <number>", "Display (<number>)", etc.
 
@@ -13,15 +13,15 @@ The implementation only contains constructions, but not proofs (as Haskell does 
 The files inside the ``src`` folder are subject to the following dependencies:
 
 ```                                             
-┌───────────┐    ┌───────────┐    ┌──────────────┐    ┌────────────┐   ┌─────────────┐    ┌───────────────┐
-│ Syntax.hs │───►│ HOGSOS.hs │───►│ Separable.hs │───►│ BigStep.hs │──►│ Examples.hs │───►│ Benchmarks.hs │
-└───────────┘    └───────────┘    └──────────────┘    └────────────┘   └─────────────┘    └───────────────┘ 
-┌──────────────┐       ▲                                                  ┌──────────┐            ▲  
-│ Behaviour.hs │───────┘                                                  │ Utils.hs │────────────┘
-└──────────────┘                                                          └──────────┘
+┌───────────┐    ┌───────────┐    ┌──────────────┐    ┌────────────┐   ┌─────────────┐    ┌──────────┐
+│ Syntax.hs │───►│ HOGSOS.hs │───►│ Separable.hs │───►│ BigStep.hs │──►│ Examples.hs │───►│ Tests.hs │
+└───────────┘    └───────────┘    └──────────────┘    └────────────┘   └─────────────┘    └──────────┘ 
+┌──────────────┐       ▲                                               ┌──────────┐            ▲  
+│ Behaviour.hs │───────┘                                               │ Utils.hs │────────────┘
+└──────────────┘                                                       └──────────┘
 ```
 
-The main function is ``runAllBenchmarks`` in Benchmarks.hs. It tests the main result of the paper Thm. 5.4 on example cases from the paper, including Exp. 2.1, for which it fails, because the strong separability condition is not satisfied. ``Main.hs`` is used a wrapper for `runAllBenchmarks``, for compatibility with cabal.
+The main function is ``runAllTests`` in Tests.hs. It tests the main result of the paper Thm. 5.4 on example cases from the paper, including Exp. 2.1, for which it fails, because the strong separability condition is not satisfied. ``Main.hs`` is used a wrapper for ``runAllTests``, for compatibility with cabal.
 
 ## Source File Contents
 
@@ -32,7 +32,7 @@ The main function is ``runAllBenchmarks`` in Benchmarks.hs. It tests the main re
 - ``BigStep.hs``: Implements abstract big-step SOS, its operational model, and the translation from small-step (separated HO-GSOS) to big-step
 - ``Examples.hs``: Implements the omega-f-g language from the introduction of the paper, together with xCL and those its versions from 
 the "Case Studies" Section (Sec. 6) that live in the category of sets.
-- ``Benchmark.hs``: Contains tests and instructions to run them, showing the results of the small-step (presented by multi-step transition) and big-step specifications.
+- ``Tests.hs``: Contains tests and instructions to run them, showing the results of the small-step (presented by multi-step transition) and big-step specifications.
 - ``Utils.hs``: Defines an auxiliary function to help with the presentation.
 
 ## Requirements
@@ -51,4 +51,10 @@ Using **Cabal**:
 ```bash
 cabal update
 cabal build
+```
+## Running Tests
+Using **Cabal**:
+
+```bash
+cabal exec tests
 ```

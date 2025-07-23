@@ -12,7 +12,7 @@ It includes:
 - Relevant instance declarations 
 
 These definitions serve as the basis for specifying operational semantics (in `HOGSOS`, `Separable`, etc.)
-and for constructing and evaluating example terms and benchmarks.
+and for constructing and evaluating example terms and tests.
 
 -}
 

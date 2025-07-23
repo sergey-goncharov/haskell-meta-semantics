@@ -1,3 +1,3 @@
 module Main where
-import Benchmarks
-main = runAllBenchmarks
+import Tests
+main = runAllTests

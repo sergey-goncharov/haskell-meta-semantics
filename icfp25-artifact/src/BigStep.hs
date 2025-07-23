@@ -42,7 +42,7 @@ class (Functor sv, Bifunctor sc) => BSSOS d sv sc where
   zetahat (Cont (Mrg (SigV v))) =  v
   zetahat (Cont (Mrg (SigC c))) = zetahat @d $ join $ xi @d $ first (zetahat @d) c
 
-  -- Big-stop operational model.
+  -- Big-step operational model.
   zeta :: InitialC sv sc -> InitialV sv sc
   zeta = zetahat @d . sigOp . SigC
 

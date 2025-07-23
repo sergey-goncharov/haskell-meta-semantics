@@ -19,7 +19,7 @@ module Behaviour where
 
 import Control.Arrow ((&&&)) -- To form product morphisms.
 
--- The class of mixed-variance functors in Haskell.
+-- The class of mixed-variance functors in Haskell (alternatively, Profunctor type class could be used).
 class MixFunctor f where
   mvmap :: (a -> b) -> (c -> d) -> f b c -> f a d
   mvmap g h = mx_first g . mx_second h

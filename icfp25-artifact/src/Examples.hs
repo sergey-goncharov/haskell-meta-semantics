@@ -11,7 +11,7 @@ its variants. It includes:
 - Pretty-printing and equality instances for terms
 - Evaluation functions for testing operational semantics
 
-These examples are used in benchmarks (``Benchmarks.hs``) and serve to demonstrate the expressiveness
+These examples are used in tests (``Tests.hs``) and serve to demonstrate the expressiveness
 of the separated HO-GSOS framework and to test the translation from small-step to big-step semantics.
 
 -}
@@ -31,14 +31,18 @@ import HOGSOS
 import Separable
 import BigStep 
 
+-- | Examples below define a number of example signatures as algebraic data types.
+-- | Whenever appropriate, we use type variables `strict` and `lazy` to distinguish 
+-- | between strict and lazy arguments, in accordance with the approach in the paper (cf. Sec. 2.1, Sec. 3).
+
 -------------------------------------------------------------------------------
 -- SECTION 1: ArtV/ArtC Example Language (Exp. 2.1)
 -------------------------------------------------------------------------------
 
-newtype ArtV x = G x 
+newtype ArtV strict = G strict 
   deriving (Functor)
 
-data ArtC x y = F x | Omega
+data ArtC strict lazy = F strict | Omega
 
 instance Functor (ArtC a) where
   fmap :: (b -> c) -> ArtC a b -> ArtC a c
@@ -103,19 +107,22 @@ tryEvalZArt = zeta @(->) @ArtV @ArtC
 -- SECTION 2: xCL (Extended Combinatory Logic)
 -------------------------------------------------------------------------------
 
--- | Syntax for xCL (Display (1)).
-data XCL' x y 
+-- | Two-sorted version of syntax for xCL (Display (1)).
+data XCL' strict lazy 
   = S 
   | K 
   | I 
-  | S' x 
-  | K' x 
-  | S'' x x 
-  | Comp x y 
+  | S' strict 
+  | K' strict 
+  | S'' strict strict 
+  | Comp strict lazy 
 
-type XCL = Mrg XCL' -- XCL as a functor (an instance of Sigma in the paper).
+-- | One-sorted version of syntax for xCL (no distinction between strict and lazy
+-- | This renders XCL as a unary functor (instance of Sigma in the paper).
+type XCL = Mrg XCL' 
 
--- | Value part of the xCL syntax (Exp. 3.3).
+-- | Value part of the xCL syntax (Exp. 3.3). One-sorted because distinction between 
+-- | strict and lazy arguments is only for computation formers.
 data XCLV x 
   = Sv 
   | Kv 
@@ -126,7 +133,7 @@ data XCLV x
   deriving (Functor)
 
 -- | Computation part of the xCL syntax (Exp. 3.3).
-data XCLC x y = Compc x y 
+data XCLC strict lazy = Compc strict lazy 
 
 instance Functor (XCLC x) where
   fmap :: (a -> b) -> XCLC x a -> XCLC x b
@@ -272,16 +279,16 @@ data NDxCLV x
   | VPar x x
   deriving (Functor)
 
-data NDxCLC x y 
-  = NComp x y 
-  | DSum y y 
-  | Par x x
+data NDxCLC strict lazy 
+  = NComp strict lazy 
+  | DSum lazy lazy 
+  | Par strict strict
 
 instance Functor (NDxCLC x) where
   fmap :: (a -> b) -> NDxCLC x a -> NDxCLC x b
-  fmap f (NComp x y) = NComp x (f y)
+  fmap f (NComp x y)  = NComp x (f y)
   fmap f (DSum y1 y2) = DSum (f y1) (f y2)
-  fmap _ (Par x1 x2) = Par x1 x2
+  fmap _ (Par x1 x2)  = Par x1 x2
 
 instance Bifunctor NDxCLC where
   bimap :: (a -> b) -> (c -> d) -> NDxCLC a c -> NDxCLC b d
@@ -312,10 +319,10 @@ instance SepHOGSOST NDxCLV NDxCLC (->) [] where
     ++ rhoCT @_ @_ @(->) (Par (s, BehCT (s' : k)) (t, BehCT l)) 
     ++ rhoCT @_ @_ @(->) (Par (s, BehCT k) (t, BehCT (t' :  l)))
   
-  rhoCT (Par (s, BehVT f) (t, BehCT (t' : l)))  = [sigOp $ SigC $ Par (Res $ Left s) (Res $ Right t')] 
-    ++ rhoCT @_ @_ @(->) (Par (s, BehVT f) (t, BehCT l)) 
-  rhoCT (Par (s, BehCT (s' : k)) (t, BehVT g))  = [sigOp $ SigC $ Par (Res $ Right s') (Res $ Left t)] 
-    ++ rhoCT @_ @_ @(->) (Par (s, BehCT k) (t, BehVT g))
+  rhoCT (Par (s, BehVT f) (t, BehCT (t' : l)))  = (sigOp $ SigC $ Par (Res $ Left s) (Res $ Right t')) 
+    : rhoCT @_ @_ @(->) (Par (s, BehVT f) (t, BehCT l)) 
+  rhoCT (Par (s, BehCT (s' : k)) (t, BehVT g))  = (sigOp $ SigC $ Par (Res $ Right s') (Res $ Left t))
+    : rhoCT @_ @_ @(->) (Par (s, BehCT k) (t, BehVT g))
   rhoCT (Par (s, BehVT _) (t, BehVT _))  = [sigOp $ SigV $ VPar (Res $ Left s) (Res $ Left t)]
   rhoCT (Par (_, BehCT []) _) = []
   rhoCT (Par _ (t, BehCT [])) = []
@@ -410,7 +417,8 @@ data CBVxCLV1 x
   | Scbv1'' x x
   deriving (Functor)
 
-data CBVxCLC1 x y = Compcbv1 x x
+-- | In CBV both arguments of application are strict
+data CBVxCLC1 strict lazy = Compcbv1 strict strict
 
 instance Functor (CBVxCLC1 a) where
   fmap :: (b -> c) -> CBVxCLC1 a b -> CBVxCLC1 a c
@@ -501,8 +509,8 @@ data CBVxCLV2 x
   | Scbv2'' x x
   deriving (Functor)
 
-data CBVxCLC2 x y 
-  = Compcbv2 x x
+data CBVxCLC2 strict lazy 
+  = Compcbv2 strict strict
 
 instance Functor (CBVxCLC2 a) where
   fmap :: (b -> c) -> CBVxCLC2 a b -> CBVxCLC2 a c
@@ -593,10 +601,10 @@ data CBVxCLV3 x
   | Scbv3'' x x
   deriving (Functor)
 
-data CBVxCLC3 x y 
-  = Compcbv3 x y 
-  | TCompcbv3 x y 
-  | RCompcbv3 y x
+data CBVxCLC3 strict lazy 
+  = Compcbv3  strict lazy 
+  | TCompcbv3 strict lazy 
+  | RCompcbv3 lazy strict
 
 instance Functor (CBVxCLC3 a) where
   fmap :: (b -> c) -> CBVxCLC3 a b -> CBVxCLC3 a c

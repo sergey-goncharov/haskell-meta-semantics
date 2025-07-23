@@ -7,8 +7,7 @@ This module provides helper functions used across the artifact, concretely:
 
 - `equalityTests`: A function to compare two lists element-wise and compare result with expectation
 
-These utilities are used in benchmark scripts to validate semantic agreement
-between different evaluation strategies.
+These utilities are used in test scripts to validate semantic agreement between evaluation strategies.
 
 -}
 

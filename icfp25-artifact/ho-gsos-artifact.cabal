@@ -8,14 +8,14 @@ library
   hs-source-dirs:      src
   exposed-modules:     BigStep, Behaviour, HOGSOS, Separable, Syntax, Examples
   other-modules:       Utils
-  default-extensions:  InstanceSigs, FlexibleInstances, DeriveFunctor, TypeSynonymInstances, MultiParamTypeClasses, TypeApplications, ScopedTypeVariables, FlexibleContexts, UndecidableInstances, TypeFamilies
+  default-extensions:  InstanceSigs, FlexibleInstances, DeriveFunctor, MultiParamTypeClasses, TypeApplications, ScopedTypeVariables
   build-depends:       base >= 4.12.0.0 && < 5
   default-language:    Haskell2010
 
-executable benchmarks
+executable tests
   hs-source-dirs:      src
   main-is:             Main.hs
-  other-modules:       Behaviour, BigStep, Examples, HOGSOS, Separable, Syntax, Utils, Benchmarks
-  default-extensions:  InstanceSigs, FlexibleInstances, DeriveFunctor, TypeSynonymInstances, MultiParamTypeClasses, TypeApplications, ScopedTypeVariables, FlexibleContexts, UndecidableInstances, TypeFamilies
+  other-modules:       Behaviour, BigStep, Examples, HOGSOS, Separable, Syntax, Utils, Tests
+  default-extensions:  InstanceSigs, FlexibleInstances, DeriveFunctor, MultiParamTypeClasses, TypeApplications, ScopedTypeVariables
   build-depends:       base >= 4.12.0.0 && < 5
   default-language:    Haskell2010
