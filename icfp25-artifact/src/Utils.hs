@@ -25,10 +25,10 @@ equalityTests (x:xs) (y:ys) (expected:es) = do
       testPassed = actualEqual == expected
   
   if testPassed
-    then putStrLn $ "✓ PASS: " ++ show x ++ 
+    then putStrLn $ "+PASS: " ++ show x ++ 
                    (if expected then " = " else " /= ") ++ 
-                   show y ++ " (as expected)"
-    else putStrLn $ "✗ FAIL: " ++ show x ++ 
+                   show y 
+    else putStrLn $ "-FAIL: " ++ show x ++ 
                    (if actualEqual then " = " else " /= ") ++ 
                    show y ++ ", but expected " ++ 
                    (if expected then "equal" else "not equal")

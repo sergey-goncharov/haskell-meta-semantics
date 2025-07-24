@@ -121,6 +121,8 @@ testCBV1Beta = fmap tryEvalBCBW testCBV1
 testCBV1Zeta :: [InitialV CBVxCLV1 CBVxCLC1]
 testCBV1Zeta = fmap tryEvalZCBW testCBV1
 
+-- | Although Theorem 5.4 does not apply to this case (strong separation fails)
+-- | it follows from the discussion in Sec. 6.4 that the two semantics still agree.
 testCBV1ZetaAgreement :: IO ()
 testCBV1ZetaAgreement = do
   putStrLn $ "Example terms: " ++ show testCBV1

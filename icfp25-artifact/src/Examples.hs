@@ -31,9 +31,10 @@ import HOGSOS
 import Separable
 import BigStep 
 
--- | Examples below define a number of example signatures as algebraic data types.
--- | Whenever appropriate, we use type variables `strict` and `lazy` to distinguish 
+-- | Below we define a number of example signatures as algebraic data types.
+-- | Whenever appropriate, we use type variables _strict_ and _lazy_ to distinguish 
 -- | between strict and lazy arguments, in accordance with the approach in the paper (cf. Sec. 2.1, Sec. 3).
+-- | This distinction is only relevant for _computation formers_ and not for _value formers_.
 
 -------------------------------------------------------------------------------
 -- SECTION 1: ArtV/ArtC Example Language (Exp. 2.1)
@@ -190,7 +191,7 @@ instance Show (Initial XCL) where
   show (Cont (Mrg K)) = "K"
   show (Cont (Mrg (K' t))) = "(K'" ++ show t ++ ")"
   show (Cont (Mrg I)) = "I"
-  show (Cont (Mrg (Comp t s))) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
+  show (Cont (Mrg (Comp t s))) = "(" ++ show t ++ " • " ++ show s ++ ")"
   
 -- SepHOGSOS instance for xCL (Exp. 3.3)
 instance SepHOGSOS XCLV XCLC (->) where
@@ -215,7 +216,7 @@ instance Show (Initial (SepSig XCLV XCLC)) where
   show (Cont (Mrg (SigV Kv))) = "K"
   show (Cont (Mrg ((SigV (K'v t))))) = "K'(" ++ show t ++ ")"
   show (Cont (Mrg (SigV Iv))) = "I"
-  show (Cont (Mrg (SigC (Compc t s)))) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
+  show (Cont (Mrg (SigC (Compc t s)))) = "(" ++ show t ++ " • " ++ show s ++ ")"
 
 instance Eq (Initial (SepSig XCLV XCLC)) where
   (==) :: Initial (SepSig XCLV XCLC) -> Initial (SepSig XCLV XCLC) -> Bool
@@ -247,7 +248,7 @@ instance Eq (InitialV XCLV XCLC) where
   _ == _ = False
 
 instance Show (InitialC XCLV XCLC) where
-  show (Compc t s) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
+  show (Compc t s) = "(" ++ show t ++ " • " ++ show s ++ ")"
 
 instance Eq (InitialC XCLV XCLC) where
   Compc t s == Compc t' s' = (t == t') && (s==s')
@@ -343,10 +344,10 @@ instance Show (Initial (SepSig NDxCLV NDxCLC)) where
   show (Cont (Mrg (SigV NK))) = "K"
   show (Cont (Mrg ((SigV (NK' t))))) = "K'(" ++ show t ++ ")"
   show (Cont (Mrg (SigV NI))) = "I"
-  show (Cont (Mrg (SigV (VPar s t)))) = "(" ++ show s ++ " ⊔ " ++ show t ++ ")"
-  show (Cont (Mrg (SigC (NComp t s)))) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
+  show (Cont (Mrg (SigV (VPar s t)))) = "(" ++ show s ++ " ╫ " ++ show t ++ ")"
+  show (Cont (Mrg (SigC (NComp t s)))) = "(" ++ show t ++ " • " ++ show s ++ ")"
   show (Cont (Mrg (SigC (DSum t s)))) = "(" ++ show t ++ " + " ++ show s ++ ")"
-  show (Cont (Mrg (SigC (Par t s)))) = "(" ++ show t ++ " || " ++ show s ++ ")"
+  show (Cont (Mrg (SigC (Par t s)))) = "(" ++ show t ++ " ║ " ++ show s ++ ")"
 
 instance Eq (Initial (SepSig NDxCLV NDxCLC)) where
   (==) :: Initial (SepSig NDxCLV NDxCLC) -> Initial (SepSig NDxCLV NDxCLC) -> Bool
@@ -368,7 +369,7 @@ instance Show (InitialV NDxCLV NDxCLC) where
   show NK = "K"
   show (NK' t) = "K'(" ++ show t ++ ")"
   show NI = "I"
-  show (VPar s t) = "(" ++ show t ++ " ⊔ " ++ show s ++ ")"
+  show (VPar s t) = "(" ++ show t ++ " ╫ " ++ show s ++ ")"
 
 instance Eq (InitialV NDxCLV NDxCLC) where
   (==) :: InitialV NDxCLV NDxCLC -> InitialV NDxCLV NDxCLC -> Bool
@@ -382,9 +383,9 @@ instance Eq (InitialV NDxCLV NDxCLC) where
   _ == _ = False
 
 instance Show (InitialC NDxCLV NDxCLC) where
-  show (NComp t s) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
+  show (NComp t s) = "(" ++ show t ++ " • " ++ show s ++ ")"
   show (DSum t s) = "(" ++ show t ++ " + " ++ show s ++ ")"
-  show (Par t s) = "(" ++ show t ++ " || " ++ show s ++ ")"
+  show (Par t s) = "(" ++ show t ++ " ║ " ++ show s ++ ")"
 
 instance Eq (InitialC NDxCLV NDxCLC) where
   NComp t s == NComp t' s' = (t == t') && (s==s')
@@ -436,7 +437,7 @@ instance Show (Initial (SepSig CBVxCLV1 CBVxCLC1)) where
   show (Cont (Mrg (SigV Kcbv1))) = "K"
   show (Cont (Mrg (SigV (Kcbv1' t)))) = "K'(" ++ show t ++ ")"
   show (Cont (Mrg (SigV Icbv1))) = "I"
-  show (Cont (Mrg (SigC (Compcbv1 t s)))) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
+  show (Cont (Mrg (SigC (Compcbv1 t s)))) = "(" ++ show t ++ " • " ++ show s ++ ")"
 
 instance Eq (Initial (SepSig CBVxCLV1 CBVxCLC1)) where
   (==) :: Initial (SepSig CBVxCLV1 CBVxCLC1) -> Initial (SepSig CBVxCLV1 CBVxCLC1) -> Bool
@@ -470,7 +471,7 @@ instance Eq (InitialV CBVxCLV1 CBVxCLC1) where
 
 instance Show (InitialC CBVxCLV1 CBVxCLC1) where
   show :: InitialC CBVxCLV1 CBVxCLC1 -> String
-  show (Compcbv1 t s) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
+  show (Compcbv1 t s) = "(" ++ show t ++ " • " ++ show s ++ ")"
 
 instance Eq (InitialC CBVxCLV1 CBVxCLC1) where
   (==) :: InitialC CBVxCLV1 CBVxCLC1 -> InitialC CBVxCLV1 CBVxCLC1 -> Bool
@@ -528,7 +529,7 @@ instance Show (Initial (SepSig CBVxCLV2 CBVxCLC2)) where
   show (Cont (Mrg (SigV Kcbv2))) = "K"
   show (Cont (Mrg (SigV (Kcbv2' t)))) = "K'(" ++ show t ++ ")"
   show (Cont (Mrg (SigV Icbv2))) = "I"
-  show (Cont (Mrg (SigC (Compcbv2 t s)))) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
+  show (Cont (Mrg (SigC (Compcbv2 t s)))) = "(" ++ show t ++ " • " ++ show s ++ ")"
 
 instance Eq (Initial (SepSig CBVxCLV2 CBVxCLC2)) where
   (==) :: Initial (SepSig CBVxCLV2 CBVxCLC2) -> Initial (SepSig CBVxCLV2 CBVxCLC2) -> Bool
@@ -562,7 +563,7 @@ instance Eq (InitialV CBVxCLV2 CBVxCLC2) where
 
 instance Show (InitialC CBVxCLV2 CBVxCLC2) where
   show :: InitialC CBVxCLV2 CBVxCLC2 -> String
-  show (Compcbv2 t s) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
+  show (Compcbv2 t s) = "(" ++ show t ++ " • " ++ show s ++ ")"
 
 instance Eq (InitialC CBVxCLV2 CBVxCLC2) where
   (==) :: InitialC CBVxCLV2 CBVxCLC2 -> InitialC CBVxCLV2 CBVxCLC2 -> Bool
@@ -626,9 +627,9 @@ instance Show (Initial (SepSig CBVxCLV3 CBVxCLC3)) where
   show (Cont (Mrg (SigV Kcbv3))) = "K"
   show (Cont (Mrg ((SigV (Kcbv3' t))))) = "K'(" ++ show t ++ ")"
   show (Cont (Mrg (SigV Icbv3))) = "I"
-  show (Cont (Mrg (SigC (Compcbv3 t s)))) = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
-  show (Cont (Mrg (SigC (TCompcbv3 t s)))) = "(" ++ show t ++ " ⋅' " ++ show s ++ ")"
-  show (Cont (Mrg (SigC (RCompcbv3 t s)))) = "(" ++ show t ++ " ⋅'' " ++ show s ++ ")"
+  show (Cont (Mrg (SigC (Compcbv3 t s)))) = "(" ++ show t ++ " • " ++ show s ++ ")"
+  show (Cont (Mrg (SigC (TCompcbv3 t s)))) = "(" ++ show t ++ " •' " ++ show s ++ ")"
+  show (Cont (Mrg (SigC (RCompcbv3 t s)))) = "(" ++ show t ++ " •'' " ++ show s ++ ")"
 
 instance Eq (Initial (SepSig CBVxCLV3 CBVxCLC3)) where
   (==) :: Initial (SepSig CBVxCLV3 CBVxCLC3) -> Initial (SepSig CBVxCLV3 CBVxCLC3) -> Bool
@@ -664,9 +665,9 @@ instance Eq (InitialV CBVxCLV3 CBVxCLC3) where
 
 instance Show (InitialC CBVxCLV3 CBVxCLC3) where
   show :: InitialC CBVxCLV3 CBVxCLC3 -> String
-  show (Compcbv3 t s)  = "(" ++ show t ++ " ⋅ " ++ show s ++ ")"
-  show (TCompcbv3 t s) = "(" ++ show t ++ " ⋅' " ++ show s ++ ")"
-  show (RCompcbv3 t s) = "(" ++ show t ++ " ⋅'' " ++ show s ++ ")"
+  show (Compcbv3 t s)  = "(" ++ show t ++ " • " ++ show s ++ ")"
+  show (TCompcbv3 t s) = "(" ++ show t ++ " •' " ++ show s ++ ")"
+  show (RCompcbv3 t s) = "(" ++ show t ++ " •'' " ++ show s ++ ")"
 
 instance Eq (InitialC CBVxCLV3 CBVxCLC3) where
   (==) :: InitialC CBVxCLV3 CBVxCLC3 -> InitialC CBVxCLV3 CBVxCLC3 -> Bool

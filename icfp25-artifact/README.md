@@ -4,7 +4,7 @@
 
 This artifact accompanies the ICFP 2025 paper "Big Steps in Higher-Order Mathematical Operational Semantics" and provides Haskell source files that implement the type classes for small-step and big-step semantics, related constructions, examples and tests supporting the paper.
 
-Links to the paper material are provided in comments via "Thm. <number>", "Sec. <number>", "Display (<number>)", etc.
+Links to the paper material are provided in comments via "Thm. \<number\>", "Sec. \<number\>", "Display (\<number\>)", etc.
 
 The implementation only contains constructions, but not proofs (as Haskell does not support them). It covers only those examples, that are mentioned in the paper as examples in the category of sets. Thus, e.g. Sec. 6.2 (Recursion and Conditionals) and Sec. 7.3 (lambda-calculus) are not covered, as those involve categories of many-sorted sets and presheaves correspondingly.
 
@@ -34,6 +34,17 @@ The main function is ``runAllTests`` in Tests.hs. It tests the main result of th
 the "Case Studies" Section (Sec. 6) that live in the category of sets.
 - ``Tests.hs``: Contains tests and instructions to run them, showing the results of the small-step (presented by multi-step transition) and big-step specifications.
 - ``Utils.hs``: Defines an auxiliary function to help with the presentation.
+
+## Reuse
+
+The framework is parametric in 
+
+1. Two language functors: for _value formers_ (instance of ``Functor``) and for _computation formers_ (instance of ``Bifunctor``) 
+2. Value part of the behavior functor (instance of ``MixFunctor``)
+3. Monad for modelling effects behind small-step/big-step transitions (instance of ``Monad``) 
+4. Small-step operations semantics in the form of separated HO-GSOS (instance of ``SepHOGSOS``)
+
+These ingredients must be provided for experimenting with custom languages/semantics -- examples are given in ``Examples.hs``. It is expected that only 1. and 4. can be broadly varied -- for 2. one typically uses the exponentiation functor ``->`` (true for all present examples); for 3. one typically uses the identity monad or the list monad (true for all present examples). 
 
 ## Requirements
 
